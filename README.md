@@ -17,11 +17,11 @@ Sets up Pitchfork reviews into OHCO format; HTML files uploaded for convenience 
 
 Adds tf-idf calculations to tokens and vocab table
 
--Pitchfork.db
+- Pitchfork.db
 
 Resulting database file of the above text manipulations 
 
--Pitchfork_adjectives.db
+- Pitchfork_adjectives.db
 
 DB file filtered for adjectives only 
 
@@ -29,6 +29,6 @@ DB file filtered for adjectives only
 
 PCA of reviews to determine whether genres can be identified; HTML contains interactive graph
 
--Classification_Pitchfork.ipynb/.html 
+- Classification_Pitchfork.ipynb/.html 
 
 Attempts to classify Pitchfork reviews as positive or negative
