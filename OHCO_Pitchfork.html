@@ -13535,24 +13535,6 @@ $( document ).ready(function(){
       <td>In Bill Brewster and Frank Broughton's Last Ni...</td>
     </tr>
     <tr>
-      <th>"Free Gold!"</th>
-      <th>Indian Jewelry</th>
-      <th>5.2</th>
-      <th>May 28 2008</th>
-      <th>Experimental</th>
-      <th>Andrew Gaerig</th>
-      <td>Indian Jewelry's debut album, Invasive Exotics...</td>
-    </tr>
-    <tr>
-      <th>"Singles"</th>
-      <th>The Long Blondes</th>
-      <th>7.4</th>
-      <th>October 21 2008</th>
-      <th>Electronic</th>
-      <th>Scott Plagenhoef</th>
-      <td>In the early 1980s, Orange Juice practically i...</td>
-    </tr>
-    <tr>
       <th>"What Is This Heart?"</th>
       <th>How to Dress Well</th>
       <th>8.8</th>
@@ -13560,6 +13542,24 @@ $( document ).ready(function(){
       <th>Pop/R&amp;B</th>
       <th>Ian Cohen</th>
       <td>How to Dress Well is a project that Tom Krell ...</td>
+    </tr>
+    <tr>
+      <th>"Witchhunt Suite for WWIII"</th>
+      <th>Ariel Pink's Haunted Graffiti</th>
+      <th>7.8</th>
+      <th>September 23 2011</th>
+      <th>Experimental</th>
+      <th>Marc Masters</th>
+      <td>Since it first went public in the early 2000s,...</td>
+    </tr>
+    <tr>
+      <th>$</th>
+      <th>Mark Sultan</th>
+      <th>6.8</th>
+      <th>April 21 2010</th>
+      <th>Electronic</th>
+      <th>Stephen M. Deusner</th>
+      <td>Mark Sultan doesn't simply revive old sounds a...</td>
     </tr>
   </tbody>
 </table>
@@ -13874,7 +13874,7 @@ $( document ).ready(function(){
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[16]:</div>
+<div class="prompt input_prompt">In&nbsp;[15]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">tokenizer</span> <span class="o">=</span> <span class="n">RegexpTokenizer</span><span class="p">(</span><span class="s1">&#39;\s+&#39;</span><span class="p">,</span> <span class="n">gaps</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -13887,7 +13887,7 @@ $( document ).ready(function(){
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[17]:</div>
+<div class="prompt input_prompt">In&nbsp;[16]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">tokens</span> <span class="o">=</span> <span class="n">sents</span><span class="o">.</span><span class="n">sent_str</span>\
@@ -13909,7 +13909,7 @@ $( document ).ready(function(){
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[18]:</div>
+<div class="prompt input_prompt">In&nbsp;[17]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">tokens</span><span class="p">[</span><span class="s1">&#39;punc&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tokens</span><span class="o">.</span><span class="n">token_str</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^[\W_]*$&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;int&#39;</span><span class="p">)</span>
@@ -13923,7 +13923,7 @@ $( document ).ready(function(){
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[19]:</div>
+<div class="prompt input_prompt">In&nbsp;[18]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">tokens</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
@@ -13939,7 +13939,7 @@ $( document ).ready(function(){
 
 <div class="output_area">
 
-    <div class="prompt output_prompt">Out[19]:</div>
+    <div class="prompt output_prompt">Out[18]:</div>
 
 
 
@@ -14062,7 +14062,7 @@ $( document ).ready(function(){
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[20]:</div>
+<div class="prompt input_prompt">In&nbsp;[19]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">WORDS</span> <span class="o">=</span> <span class="p">(</span><span class="n">tokens</span><span class="o">.</span><span class="n">punc</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">tokens</span><span class="o">.</span><span class="n">num</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
@@ -14090,7 +14090,7 @@ $( document ).ready(function(){
 
 
 <div class="output_subarea output_stream output_stderr output_text">
-<pre>C:\Users\Simran\Anaconda3\lib\site-packages\IPython\core\interactiveshell.py:2819: PerformanceWarning: indexing past lexsort depth may impact performance.
+<pre>C:\Users\Simran\Anaconda3\lib\site-packages\IPython\core\interactiveshell.py:2848: PerformanceWarning: indexing past lexsort depth may impact performance.
   raw_cell, store_history, silent, shell_futures)
 </pre>
 </div>
@@ -14109,7 +14109,7 @@ $( document ).ready(function(){
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[21]:</div>
+<div class="prompt input_prompt">In&nbsp;[20]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">vocab</span><span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">vocab</span><span class="o">.</span><span class="n">n</span> <span class="o">/</span> <span class="n">vocab</span><span class="o">.</span><span class="n">n</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
@@ -14129,7 +14129,7 @@ $( document ).ready(function(){
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[22]:</div>
+<div class="prompt input_prompt">In&nbsp;[21]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">stemmer</span> <span class="o">=</span> <span class="n">nltk</span><span class="o">.</span><span class="n">stem</span><span class="o">.</span><span class="n">porter</span><span class="o">.</span><span class="n">PorterStemmer</span><span class="p">()</span>
@@ -14150,7 +14150,7 @@ $( document ).ready(function(){
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[23]:</div>
+<div class="prompt input_prompt">In&nbsp;[22]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">stopwords</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">nltk</span><span class="o">.</span><span class="n">corpus</span><span class="o">.</span><span class="n">stopwords</span><span class="o">.</span><span class="n">words</span><span class="p">(</span><span class="s1">&#39;english&#39;</span><span class="p">))</span>
@@ -14163,7 +14163,7 @@ $( document ).ready(function(){
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[24]:</div>
+<div class="prompt input_prompt">In&nbsp;[23]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">sw</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;x&#39;</span><span class="p">:</span><span class="mi">1</span><span class="p">},</span> <span class="n">index</span><span class="o">=</span><span class="n">stopwords</span><span class="p">)</span>
@@ -14185,7 +14185,7 @@ $( document ).ready(function(){
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[25]:</div>
+<div class="prompt input_prompt">In&nbsp;[24]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">tokens</span><span class="p">[</span><span class="s1">&#39;term_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tokens</span><span class="p">[</span><span class="s1">&#39;term_str&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">vocab</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>\
@@ -14206,7 +14206,7 @@ $( document ).ready(function(){
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="prompt input_prompt">In&nbsp;[25]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">with</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">db_file</span><span class="p">)</span> <span class="k">as</span> <span class="n">db</span><span class="p">:</span>
