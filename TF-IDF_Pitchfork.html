@@ -2,7 +2,7 @@
 <html>
 <head><meta charset="utf-8" />
 
-<title>OHCO_Pitchfork</title>
+<title>TF-IDF_Pitchfork</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
@@ -13138,7 +13138,7 @@ $( document ).ready(function(){
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Preparation of Pitchfork data into OHCO format</p>
+<p>Create TFIDF matrix and save a reduced version for PCA</p>
 
 </div>
 </div>
@@ -13171,9 +13171,20 @@ $( document ).ready(function(){
 <div class="prompt input_prompt">In&nbsp;[1]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">db_file</span> <span class="o">=</span> <span class="s1">&#39;pitchfork.db&#39;</span>
-<span class="n">para_pat</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;\n&#39;</span>
-<span class="n">token_pat</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;([\W_]+)&#39;</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">db_name</span> <span class="o">=</span> <span class="s1">&#39;pitchfork.db&#39;</span>
+<span class="n">db_name2</span> <span class="o">=</span> <span class="s2">&quot;pitchfork_adjectives&quot;</span>
+
+<span class="n">OHCO</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Title&#39;</span><span class="p">,</span> <span class="s1">&#39;Artist&#39;</span><span class="p">,</span> <span class="s1">&#39;Score&#39;</span><span class="p">,</span> <span class="s1">&#39;Date&#39;</span><span class="p">,</span><span class="s1">&#39;Genre&#39;</span><span class="p">,</span> <span class="s1">&#39;Author&#39;</span><span class="p">,</span> <span class="s1">&#39;para_num&#39;</span><span class="p">,</span> <span class="s1">&#39;sent_num&#39;</span><span class="p">,</span> <span class="s1">&#39;token_num&#39;</span><span class="p">]</span>
+<span class="n">TITLE</span> <span class="o">=</span> <span class="n">OHCO</span><span class="p">[:</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">ARTIST</span> <span class="o">=</span> <span class="n">OHCO</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
+<span class="n">SCORE</span> <span class="o">=</span> <span class="n">OHCO</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span>
+<span class="n">DATE</span> <span class="o">=</span> <span class="n">OHCO</span><span class="p">[:</span><span class="mi">4</span><span class="p">]</span>
+<span class="n">GENRE</span> <span class="o">=</span> <span class="n">OHCO</span><span class="p">[:</span><span class="mi">5</span><span class="p">]</span>
+<span class="n">AUTHOR</span> <span class="o">=</span> <span class="n">OHCO</span><span class="p">[:</span><span class="mi">6</span><span class="p">]</span>
+<span class="n">PARAS</span> <span class="o">=</span> <span class="n">OHCO</span><span class="p">[:</span><span class="mi">7</span><span class="p">]</span>
+<span class="n">SENTS</span> <span class="o">=</span> <span class="n">OHCO</span><span class="p">[:</span><span class="mi">8</span><span class="p">]</span>
+
+<span class="n">BAG</span> <span class="o">=</span> <span class="n">AUTHOR</span>
 </pre></div>
 
     </div>
@@ -13193,78 +13204,39 @@ $( document ).ready(function(){
 <div class="prompt input_prompt">In&nbsp;[2]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">glob</span>
-<span class="kn">import</span> <span class="nn">sqlite3</span>
-
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">sqlite3</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-
-<span class="kn">import</span> <span class="nn">nltk</span>
-<span class="kn">from</span> <span class="nn">nltk.tokenize</span> <span class="k">import</span> <span class="n">RegexpTokenizer</span>
-<span class="n">nltk</span><span class="o">.</span><span class="n">download</span><span class="p">(</span><span class="s1">&#39;punkt&#39;</span><span class="p">)</span>
-<span class="n">nltk</span><span class="o">.</span><span class="n">download</span><span class="p">(</span><span class="s1">&#39;averaged_perceptron_tagger&#39;</span><span class="p">)</span>
-<span class="n">nltk</span><span class="o">.</span><span class="n">download</span><span class="p">(</span><span class="s1">&#39;stopwords&#39;</span><span class="p">)</span>
-<span class="n">nltk</span><span class="o">.</span><span class="n">download</span><span class="p">(</span><span class="s1">&#39;tagsets&#39;</span><span class="p">)</span>
-<span class="n">nltk</span><span class="o">.</span><span class="n">download</span><span class="p">(</span><span class="s1">&#39;wordnet&#39;</span><span class="p">)</span>
 </pre></div>
 
     </div>
 </div>
 </div>
 
-<div class="output_wrapper">
-<div class="output">
-
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>[nltk_data] Downloading package punkt to
-[nltk_data]     C:\Users\Simran\AppData\Roaming\nltk_data...
-[nltk_data]   Package punkt is already up-to-date!
-[nltk_data] Downloading package averaged_perceptron_tagger to
-[nltk_data]     C:\Users\Simran\AppData\Roaming\nltk_data...
-[nltk_data]   Package averaged_perceptron_tagger is already up-to-
-[nltk_data]       date!
-[nltk_data] Downloading package stopwords to
-[nltk_data]     C:\Users\Simran\AppData\Roaming\nltk_data...
-[nltk_data]   Package stopwords is already up-to-date!
-[nltk_data] Downloading package tagsets to
-[nltk_data]     C:\Users\Simran\AppData\Roaming\nltk_data...
-[nltk_data]   Package tagsets is already up-to-date!
-[nltk_data] Downloading package wordnet to
-[nltk_data]     C:\Users\Simran\AppData\Roaming\nltk_data...
-[nltk_data]   Package wordnet is already up-to-date!
-</pre>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Create-DTM">Create DTM<a class="anchor-link" href="#Create-DTM">&#182;</a></h1>
 </div>
 </div>
-
-<div class="output_area">
-
-    <div class="prompt output_prompt">Out[2]:</div>
-
-
-
-
-<div class="output_text output_subarea output_execute_result">
-<pre>True</pre>
 </div>
-
-</div>
-
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Load-data">Load data<a class="anchor-link" href="#Load-data">&#182;</a></h2>
 </div>
 </div>
-
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
 <div class="prompt input_prompt">In&nbsp;[3]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">matplotlib</span> inline
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">with</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">db_name</span><span class="p">)</span> <span class="k">as</span> <span class="n">db</span><span class="p">:</span>
+    <span class="n">tokens</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_sql</span><span class="p">(</span><span class="s1">&#39;SELECT * FROM token&#39;</span><span class="p">,</span> <span class="n">db</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="n">OHCO</span><span class="p">)</span>
+    <span class="n">vocab</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_sql</span><span class="p">(</span><span class="s1">&#39;SELECT * FROM vocab&#39;</span><span class="p">,</span> <span class="n">db</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="s1">&#39;term_id&#39;</span><span class="p">)</span>
+    <span class="n">docs</span> <span class="o">=</span>  <span class="n">pd</span><span class="o">.</span><span class="n">read_sql</span><span class="p">(</span><span class="s1">&#39;SELECT * FROM doc&#39;</span><span class="p">,</span> <span class="n">db</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="n">AUTHOR</span><span class="p">)</span>
 </pre></div>
 
     </div>
@@ -13275,139 +13247,59 @@ $( document ).ready(function(){
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="Preparing-Data">Preparing Data<a class="anchor-link" href="#Preparing-Data">&#182;</a></h1>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Loading-the-data">Loading the data<a class="anchor-link" href="#Loading-the-data">&#182;</a></h2>
+<h2 id="Create-word-mask">Create word mask<a class="anchor-link" href="#Create-word-mask">&#182;</a></h2>
 </div>
 </div>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">pitchfork</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;pitchfork.csv&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;ISO-8859-1&quot;</span><span class="p">)</span>
-<span class="n">pitchfork</span> <span class="o">=</span> <span class="n">pitchfork</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span><span class="mi">1</span><span class="p">:]</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">WORDS</span> <span class="o">=</span> <span class="p">(</span><span class="n">tokens</span><span class="o">.</span><span class="n">punc</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">tokens</span><span class="o">.</span><span class="n">num</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
 </pre></div>
 
     </div>
 </div>
 </div>
 
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Extract-BOW-from-tokens">Extract BOW from tokens<a class="anchor-link" href="#Extract-BOW-from-tokens">&#182;</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">BOW</span> <span class="o">=</span> <span class="n">tokens</span><span class="p">[</span><span class="n">WORDS</span><span class="p">]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">BAG</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;term_id&#39;</span><span class="p">])[</span><span class="s1">&#39;term_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Convert-BOW-to-DTM">Convert BOW to DTM<a class="anchor-link" href="#Convert-BOW-to-DTM">&#182;</a></h2>
+</div>
+</div>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
 <div class="prompt input_prompt">In&nbsp;[7]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">pitchfork</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">DTM</span> <span class="o">=</span> <span class="n">BOW</span><span class="o">.</span><span class="n">unstack</span><span class="p">()</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 </pre></div>
 
     </div>
-</div>
-</div>
-
-<div class="output_wrapper">
-<div class="output">
-
-
-<div class="output_area">
-
-    <div class="prompt output_prompt">Out[7]:</div>
-
-
-
-<div class="output_html rendered_html output_subarea output_execute_result">
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>Title</th>
-      <th>Artist</th>
-      <th>Score</th>
-      <th>Author</th>
-      <th>Genre</th>
-      <th>Date</th>
-      <th>Text</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>Girls</td>
-      <td>Yung Baby Tate</td>
-      <td>6.8</td>
-      <td>Michelle Kim</td>
-      <td>Rap</td>
-      <td>March 5 2019</td>
-      <td>As a little girl, roleplaying is an essential ...</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>Wasteland, Baby!</td>
-      <td>Hozier</td>
-      <td>4.8</td>
-      <td>Sam Sodomsky</td>
-      <td>Rock</td>
-      <td>March 6 2019</td>
-      <td>Like a desperate magician guessing card after ...</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>Rap or Go to the League</td>
-      <td>2 Chainz</td>
-      <td>7.6</td>
-      <td>Sheldon Pearce</td>
-      <td>Rap</td>
-      <td>March 6 2019</td>
-      <td>2 Chainz formed his rap group Playaz Circle in...</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>American Love Call</td>
-      <td>Durand Jones &amp; the Indications</td>
-      <td>6.6</td>
-      <td>Amanda Wicks</td>
-      <td>Pop/R&amp;B</td>
-      <td>March 5 2019</td>
-      <td>Soul is likely not the first word that comes t...</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>Good at Falling</td>
-      <td>The Japanese House</td>
-      <td>7.5</td>
-      <td>Megan Buerger</td>
-      <td>Pop/R&amp;B</td>
-      <td>March 4 2019</td>
-      <td>When Amber Bain began releasing music as the J...</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-</div>
-
-</div>
-
 </div>
 </div>
 
@@ -13415,7 +13307,7 @@ $( document ).ready(function(){
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Setting-up-OHCO-index">Setting up OHCO index<a class="anchor-link" href="#Setting-up-OHCO-index">&#182;</a></h2>
+<h2 id="Create-Bags-table">Create Bags table<a class="anchor-link" href="#Create-Bags-table">&#182;</a></h2>
 </div>
 </div>
 </div>
@@ -13424,15 +13316,7 @@ $( document ).ready(function(){
 <div class="prompt input_prompt">In&nbsp;[8]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">OHCO</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Title&#39;</span><span class="p">,</span> <span class="s1">&#39;Artist&#39;</span><span class="p">,</span> <span class="s1">&#39;Score&#39;</span><span class="p">,</span> <span class="s1">&#39;Date&#39;</span><span class="p">,</span><span class="s1">&#39;Genre&#39;</span><span class="p">,</span> <span class="s1">&#39;Author&#39;</span><span class="p">,</span> <span class="s1">&#39;para_num&#39;</span><span class="p">,</span> <span class="s1">&#39;sent_num&#39;</span><span class="p">,</span> <span class="s1">&#39;token_num&#39;</span><span class="p">]</span>
-<span class="n">TITLE</span> <span class="o">=</span> <span class="n">OHCO</span><span class="p">[:</span><span class="mi">1</span><span class="p">]</span>
-<span class="n">ARTIST</span> <span class="o">=</span> <span class="n">OHCO</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
-<span class="n">SCORE</span> <span class="o">=</span> <span class="n">OHCO</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span>
-<span class="n">DATE</span> <span class="o">=</span> <span class="n">OHCO</span><span class="p">[:</span><span class="mi">4</span><span class="p">]</span>
-<span class="n">GENRE</span> <span class="o">=</span> <span class="n">OHCO</span><span class="p">[:</span><span class="mi">5</span><span class="p">]</span>
-<span class="n">AUTHOR</span> <span class="o">=</span> <span class="n">OHCO</span><span class="p">[:</span><span class="mi">6</span><span class="p">]</span>
-<span class="n">PARAS</span> <span class="o">=</span> <span class="n">OHCO</span><span class="p">[:</span><span class="mi">7</span><span class="p">]</span>
-<span class="n">SENTS</span> <span class="o">=</span> <span class="n">OHCO</span><span class="p">[:</span><span class="mi">8</span><span class="p">]</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">bags</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">index</span> <span class="o">=</span> <span class="n">DTM</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
 </pre></div>
 
     </div>
@@ -13445,11 +13329,37 @@ $( document ).ready(function(){
 <div class="prompt input_prompt">In&nbsp;[9]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="k">try</span><span class="p">:</span>
-    <span class="n">pitchfork</span> <span class="o">=</span> <span class="n">pitchfork</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="n">AUTHOR</span><span class="p">)</span>
-    <span class="n">pitchfork</span> <span class="o">=</span> <span class="n">pitchfork</span><span class="o">.</span><span class="n">sort_index</span><span class="p">()</span>
-<span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-    <span class="k">pass</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">DTM</span> <span class="o">=</span> <span class="n">DTM</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">DTM</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;bag_id&#39;</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Compute-Term-Frequencies-and-Weights">Compute Term Frequencies and Weights<a class="anchor-link" href="#Compute-Term-Frequencies-and-Weights">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Compute-IDF">Compute IDF<a class="anchor-link" href="#Compute-IDF">&#182;</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">N_docs</span> <span class="o">=</span> <span class="n">DTM</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">vocab</span><span class="p">[</span><span class="s1">&#39;df&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">DTM</span><span class="p">[</span><span class="n">DTM</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+<span class="n">vocab</span><span class="p">[</span><span class="s1">&#39;idf&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">N_docs</span> <span class="o">/</span> <span class="n">vocab</span><span class="o">.</span><span class="n">df</span><span class="p">)</span>
 </pre></div>
 
     </div>
@@ -13459,10 +13369,11 @@ $( document ).ready(function(){
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">pitchfork</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">vocab</span><span class="p">[</span><span class="n">vocab</span><span class="o">.</span><span class="n">stop</span><span class="o">==</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s1">&#39;n&#39;</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">500</span><span class="p">)</span>\
+    <span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s1">&#39;idf&#39;</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span>
 </pre></div>
 
     </div>
@@ -13475,7 +13386,7 @@ $( document ).ready(function(){
 
 <div class="output_area">
 
-    <div class="prompt output_prompt">Out[10]:</div>
+    <div class="prompt output_prompt">Out[11]:</div>
 
 
 
@@ -13498,68 +13409,225 @@ $( document ).ready(function(){
   <thead>
     <tr style="text-align: right;">
       <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th>Text</th>
+      <th>term_str</th>
+      <th>n</th>
+      <th>p</th>
+      <th>port_stem</th>
+      <th>stop</th>
+      <th>df</th>
+      <th>idf</th>
     </tr>
     <tr>
-      <th>Title</th>
-      <th>Artist</th>
-      <th>Score</th>
-      <th>Date</th>
-      <th>Genre</th>
-      <th>Author</th>
+      <th>term_id</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
       <th></th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <th>"Cassette" EP</th>
-      <th>Viet Cong</th>
-      <th>7.8</th>
-      <th>July 7 2014</th>
-      <th>Rock</th>
-      <th>Nick Neyland</th>
-      <td>The Calgary-based band Women had the enviable ...</td>
+      <th>71581</th>
+      <td>raps</td>
+      <td>858</td>
+      <td>0.000175</td>
+      <td>rap</td>
+      <td>0</td>
+      <td>505.0</td>
+      <td>1.141310</td>
     </tr>
     <tr>
-      <th>"Evidence" 12"</th>
-      <th>Carlos Giffoni</th>
-      <th>7.6</th>
-      <th>February 13 2012</th>
-      <th>Experimental</th>
-      <th>Nick Neyland</th>
-      <td>In Bill Brewster and Frank Broughton's Last Ni...</td>
+      <th>88818</th>
+      <td>techno</td>
+      <td>969</td>
+      <td>0.000197</td>
+      <td>techno</td>
+      <td>0</td>
+      <td>535.0</td>
+      <td>1.116248</td>
     </tr>
     <tr>
-      <th>"What Is This Heart?"</th>
-      <th>How to Dress Well</th>
-      <th>8.8</th>
-      <th>June 23 2014</th>
-      <th>Pop/R&amp;B</th>
-      <th>Ian Cohen</th>
-      <td>How to Dress Well is a project that Tom Krell ...</td>
+      <th>23539</th>
+      <td>disco</td>
+      <td>924</td>
+      <td>0.000188</td>
+      <td>disco</td>
+      <td>0</td>
+      <td>593.0</td>
+      <td>1.071547</td>
     </tr>
     <tr>
-      <th>"Witchhunt Suite for WWIII"</th>
-      <th>Ariel Pink's Haunted Graffiti</th>
-      <th>7.8</th>
-      <th>September 23 2011</th>
-      <th>Experimental</th>
-      <th>Marc Masters</th>
-      <td>Since it first went public in the early 2000s,...</td>
+      <th>24254</th>
+      <td>dj</td>
+      <td>956</td>
+      <td>0.000195</td>
+      <td>dj</td>
+      <td>0</td>
+      <td>604.0</td>
+      <td>1.063564</td>
     </tr>
     <tr>
-      <th>$</th>
-      <th>Mark Sultan</th>
-      <th>6.8</th>
-      <th>April 21 2010</th>
-      <th>Electronic</th>
-      <th>Stephen M. Deusner</th>
-      <td>Mark Sultan doesn't simply revive old sounds a...</td>
+      <th>86782</th>
+      <td>sun</td>
+      <td>917</td>
+      <td>0.000187</td>
+      <td>sun</td>
+      <td>0</td>
+      <td>614.0</td>
+      <td>1.056433</td>
+    </tr>
+    <tr>
+      <th>9516</th>
+      <td>blues</td>
+      <td>1024</td>
+      <td>0.000208</td>
+      <td>blue</td>
+      <td>0</td>
+      <td>616.0</td>
+      <td>1.055021</td>
+    </tr>
+    <tr>
+      <th>49029</th>
+      <td>la</td>
+      <td>1040</td>
+      <td>0.000212</td>
+      <td>la</td>
+      <td>0</td>
+      <td>626.0</td>
+      <td>1.048027</td>
+    </tr>
+    <tr>
+      <th>88267</th>
+      <td>talk</td>
+      <td>913</td>
+      <td>0.000186</td>
+      <td>talk</td>
+      <td>0</td>
+      <td>648.0</td>
+      <td>1.033026</td>
+    </tr>
+    <tr>
+      <th>71533</th>
+      <td>rapper</td>
+      <td>1132</td>
+      <td>0.000230</td>
+      <td>rapper</td>
+      <td>0</td>
+      <td>653.0</td>
+      <td>1.029688</td>
+    </tr>
+    <tr>
+      <th>31715</th>
+      <td>fire</td>
+      <td>872</td>
+      <td>0.000177</td>
+      <td>fire</td>
+      <td>0</td>
+      <td>655.0</td>
+      <td>1.028360</td>
+    </tr>
+    <tr>
+      <th>72433</th>
+      <td>recordings</td>
+      <td>872</td>
+      <td>0.000177</td>
+      <td>record</td>
+      <td>0</td>
+      <td>656.0</td>
+      <td>1.027698</td>
+    </tr>
+    <tr>
+      <th>88445</th>
+      <td>tape</td>
+      <td>904</td>
+      <td>0.000184</td>
+      <td>tape</td>
+      <td>0</td>
+      <td>659.0</td>
+      <td>1.025716</td>
+    </tr>
+    <tr>
+      <th>79825</th>
+      <td>shit</td>
+      <td>853</td>
+      <td>0.000174</td>
+      <td>shit</td>
+      <td>0</td>
+      <td>663.0</td>
+      <td>1.023088</td>
+    </tr>
+    <tr>
+      <th>100935</th>
+      <td>york</td>
+      <td>935</td>
+      <td>0.000190</td>
+      <td>york</td>
+      <td>0</td>
+      <td>671.0</td>
+      <td>1.017879</td>
+    </tr>
+    <tr>
+      <th>2617</th>
+      <td>ambient</td>
+      <td>966</td>
+      <td>0.000197</td>
+      <td>ambient</td>
+      <td>0</td>
+      <td>680.0</td>
+      <td>1.012093</td>
+    </tr>
+    <tr>
+      <th>69290</th>
+      <td>producers</td>
+      <td>876</td>
+      <td>0.000178</td>
+      <td>produc</td>
+      <td>0</td>
+      <td>683.0</td>
+      <td>1.010181</td>
+    </tr>
+    <tr>
+      <th>33812</th>
+      <td>friends</td>
+      <td>889</td>
+      <td>0.000181</td>
+      <td>friend</td>
+      <td>0</td>
+      <td>688.0</td>
+      <td>1.007013</td>
+    </tr>
+    <tr>
+      <th>35804</th>
+      <td>girl</td>
+      <td>1044</td>
+      <td>0.000212</td>
+      <td>girl</td>
+      <td>0</td>
+      <td>692.0</td>
+      <td>1.004495</td>
+    </tr>
+    <tr>
+      <th>52850</th>
+      <td>machine</td>
+      <td>884</td>
+      <td>0.000180</td>
+      <td>machin</td>
+      <td>0</td>
+      <td>693.0</td>
+      <td>1.003868</td>
+    </tr>
+    <tr>
+      <th>18816</th>
+      <td>country</td>
+      <td>1099</td>
+      <td>0.000224</td>
+      <td>countri</td>
+      <td>0</td>
+      <td>702.0</td>
+      <td>0.998264</td>
     </tr>
   </tbody>
 </table>
@@ -13575,27 +13643,7 @@ $( document ).ready(function(){
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Create-stopwords-list">Create stopwords list<a class="anchor-link" href="#Create-stopwords-list">&#182;</a></h3>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[11]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">sw</span> <span class="o">=</span> <span class="n">nltk</span><span class="o">.</span><span class="n">corpus</span><span class="o">.</span><span class="n">stopwords</span><span class="o">.</span><span class="n">words</span><span class="p">(</span><span class="s1">&#39;english&#39;</span><span class="p">)</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Cleaning-up-text">Cleaning up text<a class="anchor-link" href="#Cleaning-up-text">&#182;</a></h3>
+<h2 id="Compute-TFIDF">Compute TFIDF<a class="anchor-link" href="#Compute-TFIDF">&#182;</a></h2>
 </div>
 </div>
 </div>
@@ -13604,48 +13652,20 @@ $( document ).ready(function(){
 <div class="prompt input_prompt">In&nbsp;[12]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">pitchfork</span><span class="o">.</span><span class="n">Text</span> <span class="o">=</span> <span class="n">pitchfork</span><span class="o">.</span><span class="n">Text</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;(—|-)&quot;</span><span class="p">,</span> <span class="s1">&#39; \g&lt;1&gt; &#39;</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">TFIDF</span> <span class="o">=</span> <span class="n">DTM</span> <span class="o">*</span> <span class="n">vocab</span><span class="p">[</span><span class="s1">&#39;idf&#39;</span><span class="p">]</span>
 </pre></div>
 
     </div>
 </div>
 </div>
 
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Getting-paragraphs">Getting paragraphs<a class="anchor-link" href="#Getting-paragraphs">&#182;</a></h2>
-</div>
-</div>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
 <div class="prompt input_prompt">In&nbsp;[13]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">paras</span> <span class="o">=</span> <span class="n">pitchfork</span><span class="o">.</span><span class="n">Text</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">para_pat</span><span class="p">,</span> <span class="n">expand</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>\
-    <span class="o">.</span><span class="n">stack</span><span class="p">()</span>\
-    <span class="o">.</span><span class="n">to_frame</span><span class="p">()</span>\
-    <span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="mi">0</span><span class="p">:</span><span class="s1">&#39;para_str&#39;</span><span class="p">})</span>
-<span class="n">paras</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">names</span> <span class="o">=</span> <span class="n">PARAS</span>
-<span class="n">paras</span><span class="o">.</span><span class="n">para_str</span> <span class="o">=</span> <span class="n">paras</span><span class="o">.</span><span class="n">para_str</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-<span class="n">paras</span><span class="o">.</span><span class="n">para_str</span> <span class="o">=</span> <span class="n">paras</span><span class="o">.</span><span class="n">para_str</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;\n&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">)</span>
-<span class="n">paras</span><span class="o">.</span><span class="n">para_str</span> <span class="o">=</span> <span class="n">paras</span><span class="o">.</span><span class="n">para_str</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;\s+&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">)</span>
-<span class="n">paras</span> <span class="o">=</span> <span class="n">paras</span><span class="p">[</span><span class="o">~</span><span class="n">paras</span><span class="o">.</span><span class="n">para_str</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^\s*$&#39;</span><span class="p">)]</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[14]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">paras</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">vocab</span><span class="p">[</span><span class="n">TFIDF</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span> <span class="c1"># test for stop words</span>
 </pre></div>
 
     </div>
@@ -13658,7 +13678,7 @@ $( document ).ready(function(){
 
 <div class="output_area">
 
-    <div class="prompt output_prompt">Out[14]:</div>
+    <div class="prompt output_prompt">Out[13]:</div>
 
 
 
@@ -13681,51 +13701,105 @@ $( document ).ready(function(){
   <thead>
     <tr style="text-align: right;">
       <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th>para_str</th>
+      <th>term_str</th>
+      <th>n</th>
+      <th>p</th>
+      <th>port_stem</th>
+      <th>stop</th>
+      <th>df</th>
+      <th>idf</th>
     </tr>
     <tr>
-      <th>Title</th>
-      <th>Artist</th>
-      <th>Score</th>
-      <th>Date</th>
-      <th>Genre</th>
-      <th>Author</th>
-      <th>para_num</th>
+      <th>term_id</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
       <th></th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <th rowspan="5" valign="top">"Cassette" EP</th>
-      <th rowspan="5" valign="top">Viet Cong</th>
-      <th rowspan="5" valign="top">7.8</th>
-      <th rowspan="5" valign="top">July 7 2014</th>
-      <th rowspan="5" valign="top">Rock</th>
-      <th rowspan="5" valign="top">Nick Neyland</th>
       <th>0</th>
-      <td>The Calgary - based band Women had the enviabl...</td>
+      <td>a</td>
+      <td>142517</td>
+      <td>2.900697e-02</td>
+      <td>a</td>
+      <td>1</td>
+      <td>6992.0</td>
+      <td>0.0</td>
     </tr>
     <tr>
-      <th>1</th>
-      <td>Theres something welcoming and likeable about...</td>
+      <th>541</th>
+      <td>acheive</td>
+      <td>1</td>
+      <td>2.035334e-07</td>
+      <td>acheiv</td>
+      <td>0</td>
+      <td>NaN</td>
+      <td>NaN</td>
     </tr>
     <tr>
-      <th>2</th>
-      <td>Viet Cong's songs are complex puzzles. Its li...</td>
+      <th>2995</th>
+      <td>and</td>
+      <td>138244</td>
+      <td>2.813727e-02</td>
+      <td>and</td>
+      <td>1</td>
+      <td>6992.0</td>
+      <td>0.0</td>
     </tr>
     <tr>
-      <th>3</th>
-      <td>The cover of Bauhaus Dark Entries, which so...</td>
+      <th>24851</th>
+      <td>dossier</td>
+      <td>1</td>
+      <td>2.035334e-07</td>
+      <td>dossier</td>
+      <td>0</td>
+      <td>NaN</td>
+      <td>NaN</td>
     </tr>
     <tr>
-      <th>4</th>
-      <td>What "Cassette" ultimately does is throw down ...</td>
+      <th>61931</th>
+      <td>of</td>
+      <td>147904</td>
+      <td>3.010340e-02</td>
+      <td>of</td>
+      <td>1</td>
+      <td>6992.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>89564</th>
+      <td>the</td>
+      <td>255840</td>
+      <td>5.207198e-02</td>
+      <td>the</td>
+      <td>1</td>
+      <td>6992.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>100272</th>
+      <td>wulfstan</td>
+      <td>1</td>
+      <td>2.035334e-07</td>
+      <td>wulfstan</td>
+      <td>0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>100597</th>
+      <td>yatton</td>
+      <td>1</td>
+      <td>2.035334e-07</td>
+      <td>yatton</td>
+      <td>0</td>
+      <td>NaN</td>
+      <td>NaN</td>
     </tr>
   </tbody>
 </table>
@@ -13741,7 +13815,29 @@ $( document ).ready(function(){
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Getting-sentences">Getting sentences<a class="anchor-link" href="#Getting-sentences">&#182;</a></h2>
+<h2 id="Add-stats-to-Vocab">Add stats to Vocab<a class="anchor-link" href="#Add-stats-to-Vocab">&#182;</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[14]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">vocab</span><span class="p">[</span><span class="s1">&#39;tfidf_sum&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">TFIDF</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<span class="n">vocab</span><span class="p">[</span><span class="s1">&#39;tfidf_mean&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">TFIDF</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+<span class="n">vocab</span><span class="p">[</span><span class="s1">&#39;tfidf_max&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">TFIDF</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Get-Top-words-and-Trim-Matrix">Get Top words and Trim Matrix<a class="anchor-link" href="#Get-Top-words-and-Trim-Matrix">&#182;</a></h1>
 </div>
 </div>
 </div>
@@ -13750,13 +13846,32 @@ $( document ).ready(function(){
 <div class="prompt input_prompt">In&nbsp;[15]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">sents</span> <span class="o">=</span> <span class="n">paras</span><span class="o">.</span><span class="n">para_str</span>\
-    <span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">nltk</span><span class="o">.</span><span class="n">sent_tokenize</span><span class="p">(</span><span class="n">x</span><span class="p">)))</span>\
-    <span class="o">.</span><span class="n">stack</span><span class="p">()</span>\
-    <span class="o">.</span><span class="n">to_frame</span><span class="p">()</span>\
-    <span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="mi">0</span><span class="p">:</span><span class="s1">&#39;sent_str&#39;</span><span class="p">})</span>
-<span class="n">sents</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">names</span> <span class="o">=</span> <span class="n">SENTS</span>
-<span class="k">del</span><span class="p">(</span><span class="n">paras</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">get_top_terms</span><span class="p">(</span><span class="n">vocab</span><span class="p">,</span> <span class="n">no_stops</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sort_col</span><span class="o">=</span><span class="s1">&#39;n&#39;</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">1500</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">no_stops</span><span class="p">:</span>
+        <span class="n">V</span> <span class="o">=</span> <span class="n">vocab</span><span class="p">[</span><span class="n">vocab</span><span class="o">.</span><span class="n">stop</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">V</span> <span class="o">=</span> <span class="n">vocab</span>
+    <span class="k">return</span> <span class="n">V</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">sort_col</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Filter-proper-nouns">Filter proper nouns<a class="anchor-link" href="#Filter-proper-nouns">&#182;</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[16]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">proper_nouns</span> <span class="o">=</span> <span class="n">tokens</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">tokens</span><span class="o">.</span><span class="n">pos</span> <span class="o">==</span> <span class="s1">&#39;NNP&#39;</span><span class="p">,</span> <span class="s1">&#39;term_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
 </pre></div>
 
     </div>
@@ -13766,10 +13881,13 @@ $( document ).ready(function(){
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[16]:</div>
+<div class="prompt input_prompt">In&nbsp;[17]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">sents</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">top_n</span> <span class="o">=</span> <span class="mi">1500</span>
+<span class="c1"># TOPV = get_top_terms(vocab, sort_col=&#39;n&#39;)</span>
+<span class="n">TOPV</span> <span class="o">=</span> <span class="n">get_top_terms</span><span class="p">(</span><span class="n">vocab</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="o">~</span><span class="n">vocab</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">proper_nouns</span><span class="p">)],</span> <span class="n">sort_col</span><span class="o">=</span><span class="s1">&#39;n&#39;</span><span class="p">)</span>
+<span class="n">TOPV</span>
 </pre></div>
 
     </div>
@@ -13782,7 +13900,7 @@ $( document ).ready(function(){
 
 <div class="output_area">
 
-    <div class="prompt output_prompt">Out[16]:</div>
+    <div class="prompt output_prompt">Out[17]:</div>
 
 
 
@@ -13805,57 +13923,828 @@ $( document ).ready(function(){
   <thead>
     <tr style="text-align: right;">
       <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th>sent_str</th>
+      <th>term_str</th>
+      <th>n</th>
+      <th>p</th>
+      <th>port_stem</th>
+      <th>stop</th>
+      <th>df</th>
+      <th>idf</th>
+      <th>tfidf_sum</th>
+      <th>tfidf_mean</th>
+      <th>tfidf_max</th>
     </tr>
     <tr>
-      <th>Title</th>
-      <th>Artist</th>
-      <th>Score</th>
-      <th>Date</th>
-      <th>Genre</th>
-      <th>Author</th>
-      <th>para_num</th>
-      <th>sent_num</th>
+      <th>term_id</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
       <th></th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <th rowspan="5" valign="top">"Cassette" EP</th>
-      <th rowspan="5" valign="top">Viet Cong</th>
-      <th rowspan="5" valign="top">7.8</th>
-      <th rowspan="5" valign="top">July 7 2014</th>
-      <th rowspan="5" valign="top">Rock</th>
-      <th rowspan="5" valign="top">Nick Neyland</th>
-      <th rowspan="5" valign="top">0</th>
-      <th>0</th>
-      <td>The Calgary - based band Women had the enviabl...</td>
+      <th>73338</th>
+      <td>released</td>
+      <td>2306</td>
+      <td>0.000469</td>
+      <td>releas</td>
+      <td>0</td>
+      <td>1764.0</td>
+      <td>0.598103</td>
+      <td>1379.225146</td>
+      <td>0.197258</td>
+      <td>6.579131</td>
     </tr>
     <tr>
-      <th>1</th>
-      <td>Both their albums, Women and Public Strain, ha...</td>
+      <th>78500</th>
+      <td>seem</td>
+      <td>2125</td>
+      <td>0.000433</td>
+      <td>seem</td>
+      <td>0</td>
+      <td>1715.0</td>
+      <td>0.610337</td>
+      <td>1296.966752</td>
+      <td>0.185493</td>
+      <td>3.662024</td>
     </tr>
     <tr>
-      <th>2</th>
-      <td>Women ended in acrimony and tragedy, but two o...</td>
+      <th>72221</th>
+      <td>recent</td>
+      <td>1552</td>
+      <td>0.000316</td>
+      <td>recent</td>
+      <td>0</td>
+      <td>1323.0</td>
+      <td>0.723042</td>
+      <td>1122.160525</td>
+      <td>0.160492</td>
+      <td>3.615208</td>
     </tr>
     <tr>
-      <th>3</th>
-      <td>"Cassette" is their scrappy introduction to th...</td>
+      <th>50258</th>
+      <td>length</td>
+      <td>1387</td>
+      <td>0.000282</td>
+      <td>length</td>
+      <td>0</td>
+      <td>1233.0</td>
+      <td>0.753638</td>
+      <td>1045.296382</td>
+      <td>0.149499</td>
+      <td>3.014553</td>
     </tr>
     <tr>
-      <th>4</th>
-      <td>Now it's been buffed up and cleaned out, and w...</td>
+      <th>95436</th>
+      <td>used</td>
+      <td>1187</td>
+      <td>0.000242</td>
+      <td>use</td>
+      <td>0</td>
+      <td>1029.0</td>
+      <td>0.832186</td>
+      <td>987.804835</td>
+      <td>0.141276</td>
+      <td>3.328744</td>
+    </tr>
+    <tr>
+      <th>29230</th>
+      <td>exactly</td>
+      <td>1128</td>
+      <td>0.000230</td>
+      <td>exactli</td>
+      <td>0</td>
+      <td>987.0</td>
+      <td>0.850284</td>
+      <td>959.120653</td>
+      <td>0.137174</td>
+      <td>3.401137</td>
+    </tr>
+    <tr>
+      <th>82923</th>
+      <td>songwriting</td>
+      <td>1061</td>
+      <td>0.000216</td>
+      <td>songwrit</td>
+      <td>0</td>
+      <td>906.0</td>
+      <td>0.887473</td>
+      <td>941.609088</td>
+      <td>0.134669</td>
+      <td>4.437366</td>
+    </tr>
+    <tr>
+      <th>78502</th>
+      <td>seemed</td>
+      <td>1009</td>
+      <td>0.000205</td>
+      <td>seem</td>
+      <td>0</td>
+      <td>835.0</td>
+      <td>0.922915</td>
+      <td>931.221179</td>
+      <td>0.133184</td>
+      <td>5.537490</td>
+    </tr>
+    <tr>
+      <th>28166</th>
+      <td>entirely</td>
+      <td>884</td>
+      <td>0.000180</td>
+      <td>entir</td>
+      <td>0</td>
+      <td>789.0</td>
+      <td>0.947524</td>
+      <td>837.611584</td>
+      <td>0.119796</td>
+      <td>2.842573</td>
+    </tr>
+    <tr>
+      <th>86634</th>
+      <td>suggests</td>
+      <td>869</td>
+      <td>0.000177</td>
+      <td>suggest</td>
+      <td>0</td>
+      <td>771.0</td>
+      <td>0.957547</td>
+      <td>832.108379</td>
+      <td>0.119009</td>
+      <td>2.872641</td>
+    </tr>
+    <tr>
+      <th>61740</th>
+      <td>obvious</td>
+      <td>790</td>
+      <td>0.000161</td>
+      <td>obviou</td>
+      <td>0</td>
+      <td>715.0</td>
+      <td>0.990295</td>
+      <td>782.333348</td>
+      <td>0.111890</td>
+      <td>3.961182</td>
+    </tr>
+    <tr>
+      <th>32750</th>
+      <td>following</td>
+      <td>773</td>
+      <td>0.000157</td>
+      <td>follow</td>
+      <td>0</td>
+      <td>705.0</td>
+      <td>0.996412</td>
+      <td>770.226710</td>
+      <td>0.110158</td>
+      <td>3.985649</td>
+    </tr>
+    <tr>
+      <th>93082</th>
+      <td>turned</td>
+      <td>734</td>
+      <td>0.000149</td>
+      <td>turn</td>
+      <td>0</td>
+      <td>647.0</td>
+      <td>1.033697</td>
+      <td>758.733700</td>
+      <td>0.108515</td>
+      <td>5.168486</td>
+    </tr>
+    <tr>
+      <th>84837</th>
+      <td>started</td>
+      <td>701</td>
+      <td>0.000143</td>
+      <td>start</td>
+      <td>0</td>
+      <td>627.0</td>
+      <td>1.047334</td>
+      <td>734.181049</td>
+      <td>0.105003</td>
+      <td>4.189336</td>
+    </tr>
+    <tr>
+      <th>59502</th>
+      <td>narrative</td>
+      <td>689</td>
+      <td>0.000140</td>
+      <td>narr</td>
+      <td>0</td>
+      <td>619.0</td>
+      <td>1.052911</td>
+      <td>725.455521</td>
+      <td>0.103755</td>
+      <td>6.317465</td>
+    </tr>
+    <tr>
+      <th>71607</th>
+      <td>rarely</td>
+      <td>685</td>
+      <td>0.000139</td>
+      <td>rare</td>
+      <td>0</td>
+      <td>625.0</td>
+      <td>1.048721</td>
+      <td>718.374161</td>
+      <td>0.102742</td>
+      <td>3.146164</td>
+    </tr>
+    <tr>
+      <th>99854</th>
+      <td>worked</td>
+      <td>650</td>
+      <td>0.000132</td>
+      <td>work</td>
+      <td>0</td>
+      <td>602.0</td>
+      <td>1.065005</td>
+      <td>692.253203</td>
+      <td>0.099006</td>
+      <td>3.195015</td>
+    </tr>
+    <tr>
+      <th>16429</th>
+      <td>collaboration</td>
+      <td>648</td>
+      <td>0.000132</td>
+      <td>collabor</td>
+      <td>0</td>
+      <td>561.0</td>
+      <td>1.095639</td>
+      <td>709.973786</td>
+      <td>0.101541</td>
+      <td>5.478193</td>
+    </tr>
+    <tr>
+      <th>14210</th>
+      <td>character</td>
+      <td>645</td>
+      <td>0.000131</td>
+      <td>charact</td>
+      <td>0</td>
+      <td>553.0</td>
+      <td>1.101876</td>
+      <td>710.710206</td>
+      <td>0.101646</td>
+      <td>4.407505</td>
+    </tr>
+    <tr>
+      <th>129</th>
+      <td>ability</td>
+      <td>639</td>
+      <td>0.000130</td>
+      <td>abil</td>
+      <td>0</td>
+      <td>575.0</td>
+      <td>1.084934</td>
+      <td>693.272554</td>
+      <td>0.099152</td>
+      <td>3.254801</td>
+    </tr>
+    <tr>
+      <th>86623</th>
+      <td>suggest</td>
+      <td>600</td>
+      <td>0.000122</td>
+      <td>suggest</td>
+      <td>0</td>
+      <td>562.0</td>
+      <td>1.094865</td>
+      <td>655.824197</td>
+      <td>0.093796</td>
+      <td>3.284595</td>
+    </tr>
+    <tr>
+      <th>18056</th>
+      <td>contrast</td>
+      <td>579</td>
+      <td>0.000118</td>
+      <td>contrast</td>
+      <td>0</td>
+      <td>543.0</td>
+      <td>1.109802</td>
+      <td>642.575121</td>
+      <td>0.091901</td>
+      <td>2.219603</td>
+    </tr>
+    <tr>
+      <th>95454</th>
+      <td>uses</td>
+      <td>573</td>
+      <td>0.000117</td>
+      <td>use</td>
+      <td>0</td>
+      <td>521.0</td>
+      <td>1.127764</td>
+      <td>646.208598</td>
+      <td>0.092421</td>
+      <td>3.383291</td>
+    </tr>
+    <tr>
+      <th>16991</th>
+      <td>compelling</td>
+      <td>561</td>
+      <td>0.000114</td>
+      <td>compel</td>
+      <td>0</td>
+      <td>526.0</td>
+      <td>1.123616</td>
+      <td>630.348394</td>
+      <td>0.090153</td>
+      <td>3.370847</td>
+    </tr>
+    <tr>
+      <th>65403</th>
+      <td>peers</td>
+      <td>552</td>
+      <td>0.000112</td>
+      <td>peer</td>
+      <td>0</td>
+      <td>514.0</td>
+      <td>1.133638</td>
+      <td>625.768342</td>
+      <td>0.089498</td>
+      <td>4.534553</td>
+    </tr>
+    <tr>
+      <th>72188</th>
+      <td>recalls</td>
+      <td>534</td>
+      <td>0.000109</td>
+      <td>recal</td>
+      <td>0</td>
+      <td>504.0</td>
+      <td>1.142171</td>
+      <td>609.919252</td>
+      <td>0.087231</td>
+      <td>3.426513</td>
+    </tr>
+    <tr>
+      <th>32601</th>
+      <td>focused</td>
+      <td>529</td>
+      <td>0.000108</td>
+      <td>focus</td>
+      <td>0</td>
+      <td>497.0</td>
+      <td>1.148245</td>
+      <td>607.421621</td>
+      <td>0.086874</td>
+      <td>3.444735</td>
+    </tr>
+    <tr>
+      <th>74735</th>
+      <td>rhythmic</td>
+      <td>527</td>
+      <td>0.000107</td>
+      <td>rhythmic</td>
+      <td>0</td>
+      <td>465.0</td>
+      <td>1.177148</td>
+      <td>619.180094</td>
+      <td>0.088556</td>
+      <td>4.708594</td>
+    </tr>
+    <tr>
+      <th>35321</th>
+      <td>genres</td>
+      <td>516</td>
+      <td>0.000105</td>
+      <td>genr</td>
+      <td>0</td>
+      <td>450.0</td>
+      <td>1.191389</td>
+      <td>614.756675</td>
+      <td>0.087923</td>
+      <td>4.765556</td>
+    </tr>
+    <tr>
+      <th>43126</th>
+      <td>impressive</td>
+      <td>501</td>
+      <td>0.000102</td>
+      <td>impress</td>
+      <td>0</td>
+      <td>461.0</td>
+      <td>1.180900</td>
+      <td>591.631148</td>
+      <td>0.084615</td>
+      <td>4.723602</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>80546</th>
+      <td>signatures</td>
+      <td>61</td>
+      <td>0.000012</td>
+      <td>signatur</td>
+      <td>0</td>
+      <td>61.0</td>
+      <td>2.059272</td>
+      <td>125.615567</td>
+      <td>0.017966</td>
+      <td>2.059272</td>
+    </tr>
+    <tr>
+      <th>95130</th>
+      <td>unwavering</td>
+      <td>61</td>
+      <td>0.000012</td>
+      <td>unwav</td>
+      <td>0</td>
+      <td>61.0</td>
+      <td>2.059272</td>
+      <td>125.615567</td>
+      <td>0.017966</td>
+      <td>2.059272</td>
+    </tr>
+    <tr>
+      <th>72314</th>
+      <td>recognized</td>
+      <td>61</td>
+      <td>0.000012</td>
+      <td>recogn</td>
+      <td>0</td>
+      <td>59.0</td>
+      <td>2.073749</td>
+      <td>126.498714</td>
+      <td>0.018092</td>
+      <td>4.147499</td>
+    </tr>
+    <tr>
+      <th>13534</th>
+      <td>category</td>
+      <td>61</td>
+      <td>0.000012</td>
+      <td>categori</td>
+      <td>0</td>
+      <td>58.0</td>
+      <td>2.081173</td>
+      <td>126.951579</td>
+      <td>0.018157</td>
+      <td>4.162347</td>
+    </tr>
+    <tr>
+      <th>63654</th>
+      <td>overdubs</td>
+      <td>61</td>
+      <td>0.000012</td>
+      <td>overdub</td>
+      <td>0</td>
+      <td>58.0</td>
+      <td>2.081173</td>
+      <td>126.951579</td>
+      <td>0.018157</td>
+      <td>6.243520</td>
+    </tr>
+    <tr>
+      <th>56908</th>
+      <td>missteps</td>
+      <td>61</td>
+      <td>0.000012</td>
+      <td>misstep</td>
+      <td>0</td>
+      <td>60.0</td>
+      <td>2.066450</td>
+      <td>126.053460</td>
+      <td>0.018028</td>
+      <td>4.132900</td>
+    </tr>
+    <tr>
+      <th>80264</th>
+      <td>shrug</td>
+      <td>61</td>
+      <td>0.000012</td>
+      <td>shrug</td>
+      <td>0</td>
+      <td>61.0</td>
+      <td>2.059272</td>
+      <td>125.615567</td>
+      <td>0.017966</td>
+      <td>2.059272</td>
+    </tr>
+    <tr>
+      <th>9604</th>
+      <td>bluster</td>
+      <td>61</td>
+      <td>0.000012</td>
+      <td>bluster</td>
+      <td>0</td>
+      <td>61.0</td>
+      <td>2.059272</td>
+      <td>125.615567</td>
+      <td>0.017966</td>
+      <td>2.059272</td>
+    </tr>
+    <tr>
+      <th>13030</th>
+      <td>careening</td>
+      <td>61</td>
+      <td>0.000012</td>
+      <td>careen</td>
+      <td>0</td>
+      <td>60.0</td>
+      <td>2.066450</td>
+      <td>126.053460</td>
+      <td>0.018028</td>
+      <td>4.132900</td>
+    </tr>
+    <tr>
+      <th>988</th>
+      <td>adrift</td>
+      <td>61</td>
+      <td>0.000012</td>
+      <td>adrift</td>
+      <td>0</td>
+      <td>59.0</td>
+      <td>2.073749</td>
+      <td>126.498714</td>
+      <td>0.018092</td>
+      <td>4.147499</td>
+    </tr>
+    <tr>
+      <th>61094</th>
+      <td>notoriously</td>
+      <td>61</td>
+      <td>0.000012</td>
+      <td>notori</td>
+      <td>0</td>
+      <td>59.0</td>
+      <td>2.073749</td>
+      <td>126.498714</td>
+      <td>0.018092</td>
+      <td>4.147499</td>
+    </tr>
+    <tr>
+      <th>95535</th>
+      <td>utter</td>
+      <td>61</td>
+      <td>0.000012</td>
+      <td>utter</td>
+      <td>0</td>
+      <td>58.0</td>
+      <td>2.081173</td>
+      <td>126.951579</td>
+      <td>0.018157</td>
+      <td>4.162347</td>
+    </tr>
+    <tr>
+      <th>4618</th>
+      <td>ascendant</td>
+      <td>61</td>
+      <td>0.000012</td>
+      <td>ascend</td>
+      <td>0</td>
+      <td>61.0</td>
+      <td>2.059272</td>
+      <td>125.615567</td>
+      <td>0.017966</td>
+      <td>2.059272</td>
+    </tr>
+    <tr>
+      <th>27069</th>
+      <td>elegantly</td>
+      <td>61</td>
+      <td>0.000012</td>
+      <td>elegantli</td>
+      <td>0</td>
+      <td>60.0</td>
+      <td>2.066450</td>
+      <td>126.053460</td>
+      <td>0.018028</td>
+      <td>4.132900</td>
+    </tr>
+    <tr>
+      <th>59406</th>
+      <td>naming</td>
+      <td>61</td>
+      <td>0.000012</td>
+      <td>name</td>
+      <td>0</td>
+      <td>58.0</td>
+      <td>2.081173</td>
+      <td>126.951579</td>
+      <td>0.018157</td>
+      <td>4.162347</td>
+    </tr>
+    <tr>
+      <th>90108</th>
+      <td>thrashing</td>
+      <td>61</td>
+      <td>0.000012</td>
+      <td>thrash</td>
+      <td>0</td>
+      <td>61.0</td>
+      <td>2.059272</td>
+      <td>125.615567</td>
+      <td>0.017966</td>
+      <td>2.059272</td>
+    </tr>
+    <tr>
+      <th>90347</th>
+      <td>thundering</td>
+      <td>61</td>
+      <td>0.000012</td>
+      <td>thunder</td>
+      <td>0</td>
+      <td>61.0</td>
+      <td>2.059272</td>
+      <td>125.615567</td>
+      <td>0.017966</td>
+      <td>2.059272</td>
+    </tr>
+    <tr>
+      <th>68941</th>
+      <td>prevailing</td>
+      <td>61</td>
+      <td>0.000012</td>
+      <td>prevail</td>
+      <td>0</td>
+      <td>61.0</td>
+      <td>2.059272</td>
+      <td>125.615567</td>
+      <td>0.017966</td>
+      <td>2.059272</td>
+    </tr>
+    <tr>
+      <th>5929</th>
+      <td>backbeat</td>
+      <td>61</td>
+      <td>0.000012</td>
+      <td>backbeat</td>
+      <td>0</td>
+      <td>61.0</td>
+      <td>2.059272</td>
+      <td>125.615567</td>
+      <td>0.017966</td>
+      <td>2.059272</td>
+    </tr>
+    <tr>
+      <th>338</th>
+      <td>academic</td>
+      <td>61</td>
+      <td>0.000012</td>
+      <td>academ</td>
+      <td>0</td>
+      <td>61.0</td>
+      <td>2.059272</td>
+      <td>125.615567</td>
+      <td>0.017966</td>
+      <td>2.059272</td>
+    </tr>
+    <tr>
+      <th>78866</th>
+      <td>separating</td>
+      <td>61</td>
+      <td>0.000012</td>
+      <td>separ</td>
+      <td>0</td>
+      <td>59.0</td>
+      <td>2.073749</td>
+      <td>126.498714</td>
+      <td>0.018092</td>
+      <td>6.221248</td>
+    </tr>
+    <tr>
+      <th>373</th>
+      <td>accept</td>
+      <td>61</td>
+      <td>0.000012</td>
+      <td>accept</td>
+      <td>0</td>
+      <td>57.0</td>
+      <td>2.088727</td>
+      <td>127.412320</td>
+      <td>0.018223</td>
+      <td>4.177453</td>
+    </tr>
+    <tr>
+      <th>17025</th>
+      <td>compiled</td>
+      <td>61</td>
+      <td>0.000012</td>
+      <td>compil</td>
+      <td>0</td>
+      <td>60.0</td>
+      <td>2.066450</td>
+      <td>126.053460</td>
+      <td>0.018028</td>
+      <td>4.132900</td>
+    </tr>
+    <tr>
+      <th>16614</th>
+      <td>colossal</td>
+      <td>61</td>
+      <td>0.000012</td>
+      <td>coloss</td>
+      <td>0</td>
+      <td>61.0</td>
+      <td>2.059272</td>
+      <td>125.615567</td>
+      <td>0.017966</td>
+      <td>2.059272</td>
+    </tr>
+    <tr>
+      <th>79016</th>
+      <td>serrated</td>
+      <td>61</td>
+      <td>0.000012</td>
+      <td>serrat</td>
+      <td>0</td>
+      <td>61.0</td>
+      <td>2.059272</td>
+      <td>125.615567</td>
+      <td>0.017966</td>
+      <td>2.059272</td>
+    </tr>
+    <tr>
+      <th>67283</th>
+      <td>pleasurable</td>
+      <td>61</td>
+      <td>0.000012</td>
+      <td>pleasur</td>
+      <td>0</td>
+      <td>59.0</td>
+      <td>2.073749</td>
+      <td>126.498714</td>
+      <td>0.018092</td>
+      <td>4.147499</td>
+    </tr>
+    <tr>
+      <th>24880</th>
+      <td>doubling</td>
+      <td>61</td>
+      <td>0.000012</td>
+      <td>doubl</td>
+      <td>0</td>
+      <td>59.0</td>
+      <td>2.073749</td>
+      <td>126.498714</td>
+      <td>0.018092</td>
+      <td>4.147499</td>
+    </tr>
+    <tr>
+      <th>25583</th>
+      <td>drumbeat</td>
+      <td>60</td>
+      <td>0.000012</td>
+      <td>drumbeat</td>
+      <td>0</td>
+      <td>58.0</td>
+      <td>2.081173</td>
+      <td>124.870406</td>
+      <td>0.017859</td>
+      <td>4.162347</td>
+    </tr>
+    <tr>
+      <th>74543</th>
+      <td>revivalism</td>
+      <td>60</td>
+      <td>0.000012</td>
+      <td>reviv</td>
+      <td>0</td>
+      <td>58.0</td>
+      <td>2.081173</td>
+      <td>124.870406</td>
+      <td>0.017859</td>
+      <td>4.162347</td>
+    </tr>
+    <tr>
+      <th>80224</th>
+      <td>shrieking</td>
+      <td>60</td>
+      <td>0.000012</td>
+      <td>shriek</td>
+      <td>0</td>
+      <td>59.0</td>
+      <td>2.073749</td>
+      <td>124.424964</td>
+      <td>0.017795</td>
+      <td>4.147499</td>
     </tr>
   </tbody>
 </table>
+<p>1500 rows × 10 columns</p>
 </div>
 </div>
 
@@ -13868,52 +14757,41 @@ $( document ).ready(function(){
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Getting-tokens">Getting tokens<a class="anchor-link" href="#Getting-tokens">&#182;</a></h2>
+<h2 id="Create-tf-idf-matrix">Create tf-idf matrix<a class="anchor-link" href="#Create-tf-idf-matrix">&#182;</a></h2>
 </div>
 </div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[17]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">tokenizer</span> <span class="o">=</span> <span class="n">RegexpTokenizer</span><span class="p">(</span><span class="s1">&#39;\s+&#39;</span><span class="p">,</span> <span class="n">gaps</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
 <div class="prompt input_prompt">In&nbsp;[18]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">tokens</span> <span class="o">=</span> <span class="n">sents</span><span class="o">.</span><span class="n">sent_str</span>\
-    <span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">nltk</span><span class="o">.</span><span class="n">pos_tag</span><span class="p">(</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">tokenize</span><span class="p">(</span><span class="n">x</span><span class="p">))))</span>\
-    <span class="o">.</span><span class="n">stack</span><span class="p">()</span>\
-    <span class="o">.</span><span class="n">to_frame</span><span class="p">()</span>\
-    <span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="mi">0</span><span class="p">:</span><span class="s1">&#39;pos_tuple&#39;</span><span class="p">})</span>
-<span class="n">tokens</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">names</span> <span class="o">=</span> <span class="n">OHCO</span>
-<span class="n">tokens</span><span class="p">[</span><span class="s1">&#39;pos&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tokens</span><span class="o">.</span><span class="n">pos_tuple</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-<span class="n">tokens</span><span class="p">[</span><span class="s1">&#39;token_str&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tokens</span><span class="o">.</span><span class="n">pos_tuple</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-<span class="n">tokens</span> <span class="o">=</span> <span class="n">tokens</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s1">&#39;pos_tuple&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-<span class="k">del</span><span class="p">(</span><span class="n">sents</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">tfidf_small</span> <span class="o">=</span> <span class="n">TFIDF</span><span class="p">[</span><span class="n">TOPV</span><span class="o">.</span><span class="n">index</span><span class="p">]</span><span class="o">.</span><span class="n">stack</span><span class="p">()</span><span class="o">.</span><span class="n">to_frame</span><span class="p">()</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="mi">0</span><span class="p">:</span><span class="s1">&#39;w&#39;</span><span class="p">})</span>
 </pre></div>
 
     </div>
 </div>
 </div>
 
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Save-to-SQL">Save to SQL<a class="anchor-link" href="#Save-to-SQL">&#182;</a></h1>
+</div>
+</div>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
 <div class="prompt input_prompt">In&nbsp;[19]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">tokens</span><span class="p">[</span><span class="s1">&#39;punc&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tokens</span><span class="o">.</span><span class="n">token_str</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^[\W_]*$&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;int&#39;</span><span class="p">)</span>
-<span class="n">tokens</span><span class="p">[</span><span class="s1">&#39;num&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tokens</span><span class="o">.</span><span class="n">token_str</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^.*\d.*$&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;int&#39;</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">with</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">db_name</span><span class="p">)</span> <span class="k">as</span> <span class="n">db</span><span class="p">:</span>
+    <span class="n">vocab</span><span class="o">.</span><span class="n">to_sql</span><span class="p">(</span><span class="s1">&#39;vocab&#39;</span><span class="p">,</span> <span class="n">db</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="s1">&#39;replace&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">tokens</span><span class="o">.</span><span class="n">to_sql</span><span class="p">(</span><span class="s1">&#39;token&#39;</span><span class="p">,</span> <span class="n">db</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="s1">&#39;replace&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">docs</span><span class="o">.</span><span class="n">to_sql</span><span class="p">(</span><span class="s1">&#39;doc&#39;</span><span class="p">,</span> <span class="n">db</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="s1">&#39;replace&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">tfidf_small</span><span class="o">.</span><span class="n">to_sql</span><span class="p">(</span><span class="s1">&#39;tfidf_small&#39;</span><span class="p">,</span> <span class="n">db</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="s1">&#39;replace&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">bags</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span><span class="o">.</span><span class="n">to_sql</span><span class="p">(</span><span class="s1">&#39;bag&#39;</span><span class="p">,</span> <span class="n">db</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="s1">&#39;replace&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">index_label</span><span class="o">=</span><span class="s1">&#39;bag_id&#39;</span><span class="p">)</span>
 </pre></div>
 
     </div>
@@ -13921,12 +14799,23 @@ $( document ).ready(function(){
 </div>
 
 </div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Filter-only-adjectives">Filter only adjectives<a class="anchor-link" href="#Filter-only-adjectives">&#182;</a></h2>
+</div>
+</div>
+</div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
 <div class="prompt input_prompt">In&nbsp;[20]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">tokens</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">adjectives</span> <span class="o">=</span> <span class="n">tokens</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">tokens</span><span class="o">.</span><span class="n">pos</span> <span class="o">==</span> <span class="s1">&#39;JJ&#39;</span><span class="p">,</span> <span class="s1">&#39;term_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+<span class="n">top_n</span> <span class="o">=</span> <span class="mi">1500</span>
+<span class="n">TOPV</span> <span class="o">=</span> <span class="n">get_top_terms</span><span class="p">(</span><span class="n">vocab</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">vocab</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">adjectives</span><span class="p">)],</span> <span class="n">sort_col</span><span class="o">=</span><span class="s1">&#39;n&#39;</span><span class="p">)</span>
+<span class="n">tfidf_small</span> <span class="o">=</span> <span class="n">TFIDF</span><span class="p">[</span><span class="n">TOPV</span><span class="o">.</span><span class="n">index</span><span class="p">]</span><span class="o">.</span><span class="n">stack</span><span class="p">()</span><span class="o">.</span><span class="n">to_frame</span><span class="p">()</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="mi">0</span><span class="p">:</span><span class="s1">&#39;w&#39;</span><span class="p">})</span>
+<span class="n">TOPV</span>
 </pre></div>
 
     </div>
@@ -13962,29 +14851,25 @@ $( document ).ready(function(){
   <thead>
     <tr style="text-align: right;">
       <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th>pos</th>
-      <th>token_str</th>
-      <th>punc</th>
-      <th>num</th>
+      <th>term_str</th>
+      <th>n</th>
+      <th>p</th>
+      <th>port_stem</th>
+      <th>stop</th>
+      <th>df</th>
+      <th>idf</th>
+      <th>tfidf_sum</th>
+      <th>tfidf_mean</th>
+      <th>tfidf_max</th>
     </tr>
     <tr>
-      <th>Title</th>
-      <th>Artist</th>
-      <th>Score</th>
-      <th>Date</th>
-      <th>Genre</th>
-      <th>Author</th>
-      <th>para_num</th>
-      <th>sent_num</th>
-      <th>token_num</th>
+      <th>term_id</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
       <th></th>
       <th></th>
       <th></th>
@@ -13993,50 +14878,801 @@ $( document ).ready(function(){
   </thead>
   <tbody>
     <tr>
-      <th rowspan="5" valign="top">"Cassette" EP</th>
-      <th rowspan="5" valign="top">Viet Cong</th>
-      <th rowspan="5" valign="top">7.8</th>
-      <th rowspan="5" valign="top">July 7 2014</th>
-      <th rowspan="5" valign="top">Rock</th>
-      <th rowspan="5" valign="top">Nick Neyland</th>
-      <th rowspan="5" valign="top">0</th>
-      <th rowspan="5" valign="top">0</th>
-      <th>0</th>
-      <td>DT</td>
-      <td>The</td>
+      <th>50821</th>
+      <td>like</td>
+      <td>28205</td>
+      <td>0.005741</td>
+      <td>like</td>
       <td>0</td>
-      <td>0</td>
+      <td>6676.0</td>
+      <td>0.020085</td>
+      <td>566.439754</td>
+      <td>0.081013</td>
+      <td>0.441872</td>
     </tr>
     <tr>
-      <th>1</th>
-      <td>NNP</td>
-      <td>Calgary</td>
+      <th>1863</th>
+      <td>album</td>
+      <td>16433</td>
+      <td>0.003345</td>
+      <td>album</td>
       <td>0</td>
-      <td>0</td>
+      <td>5585.0</td>
+      <td>0.097578</td>
+      <td>1603.308097</td>
+      <td>0.229306</td>
+      <td>1.853987</td>
     </tr>
     <tr>
-      <th>2</th>
-      <td>:</td>
-      <td>-</td>
-      <td>1</td>
+      <th>62380</th>
+      <td>one</td>
+      <td>14586</td>
+      <td>0.002969</td>
+      <td>one</td>
       <td>0</td>
+      <td>5641.0</td>
+      <td>0.093245</td>
+      <td>1359.889745</td>
+      <td>0.194492</td>
+      <td>2.237888</td>
     </tr>
     <tr>
-      <th>3</th>
-      <td>VBN</td>
-      <td>based</td>
+      <th>58807</th>
+      <td>music</td>
+      <td>14489</td>
+      <td>0.002949</td>
+      <td>music</td>
       <td>0</td>
-      <td>0</td>
+      <td>5180.0</td>
+      <td>0.130272</td>
+      <td>1887.375808</td>
+      <td>0.269934</td>
+      <td>2.996248</td>
     </tr>
     <tr>
-      <th>4</th>
-      <td>NN</td>
+      <th>82802</th>
+      <td>songs</td>
+      <td>12412</td>
+      <td>0.002526</td>
+      <td>song</td>
+      <td>0</td>
+      <td>4914.0</td>
+      <td>0.153166</td>
+      <td>1901.099712</td>
+      <td>0.271896</td>
+      <td>3.063325</td>
+    </tr>
+    <tr>
+      <th>29039</th>
+      <td>even</td>
+      <td>9626</td>
+      <td>0.001959</td>
+      <td>even</td>
+      <td>0</td>
+      <td>4878.0</td>
+      <td>0.156360</td>
+      <td>1504.961378</td>
+      <td>0.215240</td>
+      <td>2.189035</td>
+    </tr>
+    <tr>
+      <th>82752</th>
+      <td>song</td>
+      <td>9569</td>
+      <td>0.001948</td>
+      <td>song</td>
+      <td>0</td>
+      <td>4385.0</td>
+      <td>0.202632</td>
+      <td>1938.983904</td>
+      <td>0.277315</td>
+      <td>4.863164</td>
+    </tr>
+    <tr>
+      <th>83166</th>
+      <td>sound</td>
+      <td>9425</td>
+      <td>0.001918</td>
+      <td>sound</td>
+      <td>0</td>
+      <td>4754.0</td>
+      <td>0.167542</td>
+      <td>1578.918091</td>
+      <td>0.225818</td>
+      <td>1.842965</td>
+    </tr>
+    <tr>
+      <th>60149</th>
+      <td>new</td>
+      <td>9055</td>
+      <td>0.001843</td>
+      <td>new</td>
+      <td>0</td>
+      <td>4417.0</td>
+      <td>0.199474</td>
+      <td>1805.838306</td>
+      <td>0.258272</td>
+      <td>3.790006</td>
+    </tr>
+    <tr>
+      <th>6443</th>
+      <td>band</td>
+      <td>9050</td>
+      <td>0.001842</td>
       <td>band</td>
       <td>0</td>
+      <td>3402.0</td>
+      <td>0.312867</td>
+      <td>2830.195880</td>
+      <td>0.404776</td>
+      <td>7.195944</td>
+    </tr>
+    <tr>
+      <th>90572</th>
+      <td>time</td>
+      <td>8398</td>
+      <td>0.001709</td>
+      <td>time</td>
       <td>0</td>
+      <td>4363.0</td>
+      <td>0.204816</td>
+      <td>1720.046503</td>
+      <td>0.246002</td>
+      <td>4.505957</td>
+    </tr>
+    <tr>
+      <th>58408</th>
+      <td>much</td>
+      <td>7621</td>
+      <td>0.001551</td>
+      <td>much</td>
+      <td>0</td>
+      <td>4294.0</td>
+      <td>0.211739</td>
+      <td>1613.454072</td>
+      <td>0.230757</td>
+      <td>1.905654</td>
+    </tr>
+    <tr>
+      <th>31793</th>
+      <td>first</td>
+      <td>7617</td>
+      <td>0.001550</td>
+      <td>first</td>
+      <td>0</td>
+      <td>4269.0</td>
+      <td>0.214275</td>
+      <td>1631.920417</td>
+      <td>0.233398</td>
+      <td>2.785578</td>
+    </tr>
+    <tr>
+      <th>67927</th>
+      <td>pop</td>
+      <td>7355</td>
+      <td>0.001497</td>
+      <td>pop</td>
+      <td>0</td>
+      <td>3372.0</td>
+      <td>0.316714</td>
+      <td>2329.430394</td>
+      <td>0.333157</td>
+      <td>6.650991</td>
+    </tr>
+    <tr>
+      <th>72397</th>
+      <td>record</td>
+      <td>7321</td>
+      <td>0.001490</td>
+      <td>record</td>
+      <td>0</td>
+      <td>3824.0</td>
+      <td>0.262084</td>
+      <td>1917.927317</td>
+      <td>0.274303</td>
+      <td>3.669170</td>
+    </tr>
+    <tr>
+      <th>97926</th>
+      <td>way</td>
+      <td>7196</td>
+      <td>0.001465</td>
+      <td>way</td>
+      <td>0</td>
+      <td>4115.0</td>
+      <td>0.230232</td>
+      <td>1656.746450</td>
+      <td>0.236949</td>
+      <td>3.683705</td>
+    </tr>
+    <tr>
+      <th>83238</th>
+      <td>sounds</td>
+      <td>6926</td>
+      <td>0.001410</td>
+      <td>sound</td>
+      <td>0</td>
+      <td>3975.0</td>
+      <td>0.245264</td>
+      <td>1698.455185</td>
+      <td>0.242914</td>
+      <td>2.452643</td>
+    </tr>
+    <tr>
+      <th>75381</th>
+      <td>rock</td>
+      <td>6722</td>
+      <td>0.001368</td>
+      <td>rock</td>
+      <td>0</td>
+      <td>3120.0</td>
+      <td>0.350447</td>
+      <td>2354.652221</td>
+      <td>0.336764</td>
+      <td>8.410724</td>
+    </tr>
+    <tr>
+      <th>93341</th>
+      <td>two</td>
+      <td>6636</td>
+      <td>0.001351</td>
+      <td>two</td>
+      <td>0</td>
+      <td>3831.0</td>
+      <td>0.261289</td>
+      <td>1733.915580</td>
+      <td>0.247986</td>
+      <td>2.874182</td>
+    </tr>
+    <tr>
+      <th>85291</th>
+      <td>still</td>
+      <td>6520</td>
+      <td>0.001327</td>
+      <td>still</td>
+      <td>0</td>
+      <td>3793.0</td>
+      <td>0.265619</td>
+      <td>1731.833122</td>
+      <td>0.247688</td>
+      <td>2.921804</td>
+    </tr>
+    <tr>
+      <th>91651</th>
+      <td>track</td>
+      <td>6153</td>
+      <td>0.001252</td>
+      <td>track</td>
+      <td>0</td>
+      <td>3817.0</td>
+      <td>0.262879</td>
+      <td>1617.233206</td>
+      <td>0.231298</td>
+      <td>2.891672</td>
+    </tr>
+    <tr>
+      <th>1924</th>
+      <td>albums</td>
+      <td>6133</td>
+      <td>0.001248</td>
+      <td>album</td>
+      <td>0</td>
+      <td>3535.0</td>
+      <td>0.296212</td>
+      <td>1816.371993</td>
+      <td>0.259779</td>
+      <td>2.962120</td>
+    </tr>
+    <tr>
+      <th>100682</th>
+      <td>years</td>
+      <td>6069</td>
+      <td>0.001235</td>
+      <td>year</td>
+      <td>0</td>
+      <td>3681.0</td>
+      <td>0.278636</td>
+      <td>1690.482198</td>
+      <td>0.241774</td>
+      <td>4.179534</td>
+    </tr>
+    <tr>
+      <th>40180</th>
+      <td>hes</td>
+      <td>5869</td>
+      <td>0.001195</td>
+      <td>he</td>
+      <td>0</td>
+      <td>2729.0</td>
+      <td>0.408598</td>
+      <td>2397.652383</td>
+      <td>0.342914</td>
+      <td>5.311772</td>
+    </tr>
+    <tr>
+      <th>89773</th>
+      <td>theres</td>
+      <td>5797</td>
+      <td>0.001180</td>
+      <td>there</td>
+      <td>0</td>
+      <td>3538.0</td>
+      <td>0.295844</td>
+      <td>1715.005297</td>
+      <td>0.245281</td>
+      <td>2.662592</td>
+    </tr>
+    <tr>
+      <th>2445</th>
+      <td>also</td>
+      <td>5758</td>
+      <td>0.001172</td>
+      <td>also</td>
+      <td>0</td>
+      <td>3570.0</td>
+      <td>0.291933</td>
+      <td>1680.659453</td>
+      <td>0.240369</td>
+      <td>2.335466</td>
+    </tr>
+    <tr>
+      <th>91695</th>
+      <td>tracks</td>
+      <td>5565</td>
+      <td>0.001133</td>
+      <td>track</td>
+      <td>0</td>
+      <td>3268.0</td>
+      <td>0.330319</td>
+      <td>1837.896985</td>
+      <td>0.262857</td>
+      <td>3.303194</td>
+    </tr>
+    <tr>
+      <th>37839</th>
+      <td>guitar</td>
+      <td>5443</td>
+      <td>0.001108</td>
+      <td>guitar</td>
+      <td>0</td>
+      <td>3042.0</td>
+      <td>0.361442</td>
+      <td>1967.329949</td>
+      <td>0.281369</td>
+      <td>3.975864</td>
+    </tr>
+    <tr>
+      <th>99835</th>
+      <td>work</td>
+      <td>5443</td>
+      <td>0.001108</td>
+      <td>work</td>
+      <td>0</td>
+      <td>3320.0</td>
+      <td>0.323463</td>
+      <td>1760.610937</td>
+      <td>0.251804</td>
+      <td>3.881560</td>
+    </tr>
+    <tr>
+      <th>90046</th>
+      <td>though</td>
+      <td>5275</td>
+      <td>0.001074</td>
+      <td>though</td>
+      <td>0</td>
+      <td>3433.0</td>
+      <td>0.308928</td>
+      <td>1629.284248</td>
+      <td>0.233021</td>
+      <td>2.471421</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>4722</th>
+      <td>ask</td>
+      <td>309</td>
+      <td>0.000063</td>
+      <td>ask</td>
+      <td>0</td>
+      <td>275.0</td>
+      <td>1.405269</td>
+      <td>434.228036</td>
+      <td>0.062104</td>
+      <td>9.836881</td>
+    </tr>
+    <tr>
+      <th>8822</th>
+      <td>bits</td>
+      <td>309</td>
+      <td>0.000063</td>
+      <td>bit</td>
+      <td>0</td>
+      <td>289.0</td>
+      <td>1.383704</td>
+      <td>427.564405</td>
+      <td>0.061151</td>
+      <td>4.151111</td>
+    </tr>
+    <tr>
+      <th>85044</th>
+      <td>steel</td>
+      <td>309</td>
+      <td>0.000063</td>
+      <td>steel</td>
+      <td>0</td>
+      <td>259.0</td>
+      <td>1.431302</td>
+      <td>442.272212</td>
+      <td>0.063254</td>
+      <td>14.313017</td>
+    </tr>
+    <tr>
+      <th>39887</th>
+      <td>helps</td>
+      <td>309</td>
+      <td>0.000063</td>
+      <td>help</td>
+      <td>0</td>
+      <td>289.0</td>
+      <td>1.383704</td>
+      <td>427.564405</td>
+      <td>0.061151</td>
+      <td>6.918518</td>
+    </tr>
+    <tr>
+      <th>46288</th>
+      <td>jesus</td>
+      <td>308</td>
+      <td>0.000063</td>
+      <td>jesu</td>
+      <td>0</td>
+      <td>216.0</td>
+      <td>1.510148</td>
+      <td>465.125482</td>
+      <td>0.066523</td>
+      <td>25.672510</td>
+    </tr>
+    <tr>
+      <th>1468</th>
+      <td>aggressive</td>
+      <td>308</td>
+      <td>0.000063</td>
+      <td>aggress</td>
+      <td>0</td>
+      <td>286.0</td>
+      <td>1.388235</td>
+      <td>427.576499</td>
+      <td>0.061152</td>
+      <td>4.164706</td>
+    </tr>
+    <tr>
+      <th>27794</th>
+      <td>ending</td>
+      <td>308</td>
+      <td>0.000063</td>
+      <td>end</td>
+      <td>0</td>
+      <td>282.0</td>
+      <td>1.394352</td>
+      <td>429.460512</td>
+      <td>0.061422</td>
+      <td>6.971762</td>
+    </tr>
+    <tr>
+      <th>60932</th>
+      <td>north</td>
+      <td>308</td>
+      <td>0.000063</td>
+      <td>north</td>
+      <td>0</td>
+      <td>251.0</td>
+      <td>1.444928</td>
+      <td>445.037731</td>
+      <td>0.063650</td>
+      <td>10.114494</td>
+    </tr>
+    <tr>
+      <th>40559</th>
+      <td>hint</td>
+      <td>307</td>
+      <td>0.000062</td>
+      <td>hint</td>
+      <td>0</td>
+      <td>291.0</td>
+      <td>1.380708</td>
+      <td>423.877488</td>
+      <td>0.060623</td>
+      <td>4.142125</td>
+    </tr>
+    <tr>
+      <th>93404</th>
+      <td>typical</td>
+      <td>307</td>
+      <td>0.000062</td>
+      <td>typic</td>
+      <td>0</td>
+      <td>276.0</td>
+      <td>1.403692</td>
+      <td>430.933548</td>
+      <td>0.061632</td>
+      <td>9.825846</td>
+    </tr>
+    <tr>
+      <th>90175</th>
+      <td>thrilling</td>
+      <td>307</td>
+      <td>0.000062</td>
+      <td>thrill</td>
+      <td>0</td>
+      <td>299.0</td>
+      <td>1.368930</td>
+      <td>420.261581</td>
+      <td>0.060106</td>
+      <td>2.737860</td>
+    </tr>
+    <tr>
+      <th>48396</th>
+      <td>knowing</td>
+      <td>307</td>
+      <td>0.000062</td>
+      <td>know</td>
+      <td>0</td>
+      <td>294.0</td>
+      <td>1.376254</td>
+      <td>422.510005</td>
+      <td>0.060428</td>
+      <td>4.128762</td>
+    </tr>
+    <tr>
+      <th>41121</th>
+      <td>honest</td>
+      <td>307</td>
+      <td>0.000062</td>
+      <td>honest</td>
+      <td>0</td>
+      <td>278.0</td>
+      <td>1.400557</td>
+      <td>429.970883</td>
+      <td>0.061495</td>
+      <td>9.803896</td>
+    </tr>
+    <tr>
+      <th>29751</th>
+      <td>explore</td>
+      <td>307</td>
+      <td>0.000062</td>
+      <td>explor</td>
+      <td>0</td>
+      <td>292.0</td>
+      <td>1.379219</td>
+      <td>423.420100</td>
+      <td>0.060558</td>
+      <td>2.758437</td>
+    </tr>
+    <tr>
+      <th>84953</th>
+      <td>status</td>
+      <td>307</td>
+      <td>0.000062</td>
+      <td>statu</td>
+      <td>0</td>
+      <td>285.0</td>
+      <td>1.389757</td>
+      <td>426.655264</td>
+      <td>0.061020</td>
+      <td>6.948783</td>
+    </tr>
+    <tr>
+      <th>62954</th>
+      <td>originally</td>
+      <td>306</td>
+      <td>0.000062</td>
+      <td>origin</td>
+      <td>0</td>
+      <td>288.0</td>
+      <td>1.385209</td>
+      <td>423.873933</td>
+      <td>0.060623</td>
+      <td>2.770418</td>
+    </tr>
+    <tr>
+      <th>17139</th>
+      <td>composition</td>
+      <td>306</td>
+      <td>0.000062</td>
+      <td>composit</td>
+      <td>0</td>
+      <td>276.0</td>
+      <td>1.403692</td>
+      <td>429.529855</td>
+      <td>0.061432</td>
+      <td>5.614769</td>
+    </tr>
+    <tr>
+      <th>68600</th>
+      <td>predecessor</td>
+      <td>306</td>
+      <td>0.000062</td>
+      <td>predecessor</td>
+      <td>0</td>
+      <td>293.0</td>
+      <td>1.377734</td>
+      <td>420.208809</td>
+      <td>0.060099</td>
+      <td>4.133201</td>
+    </tr>
+    <tr>
+      <th>58370</th>
+      <td>mr</td>
+      <td>306</td>
+      <td>0.000062</td>
+      <td>mr</td>
+      <td>0</td>
+      <td>195.0</td>
+      <td>1.554567</td>
+      <td>475.697443</td>
+      <td>0.068035</td>
+      <td>17.100235</td>
+    </tr>
+    <tr>
+      <th>31236</th>
+      <td>festival</td>
+      <td>306</td>
+      <td>0.000062</td>
+      <td>festiv</td>
+      <td>0</td>
+      <td>261.0</td>
+      <td>1.427961</td>
+      <td>436.956039</td>
+      <td>0.062494</td>
+      <td>8.567765</td>
+    </tr>
+    <tr>
+      <th>21840</th>
+      <td>delivers</td>
+      <td>305</td>
+      <td>0.000062</td>
+      <td>deliv</td>
+      <td>0</td>
+      <td>288.0</td>
+      <td>1.385209</td>
+      <td>422.488724</td>
+      <td>0.060425</td>
+      <td>4.155627</td>
+    </tr>
+    <tr>
+      <th>79462</th>
+      <td>shared</td>
+      <td>305</td>
+      <td>0.000062</td>
+      <td>share</td>
+      <td>0</td>
+      <td>284.0</td>
+      <td>1.391283</td>
+      <td>424.341339</td>
+      <td>0.060690</td>
+      <td>4.173849</td>
+    </tr>
+    <tr>
+      <th>20735</th>
+      <td>darker</td>
+      <td>305</td>
+      <td>0.000062</td>
+      <td>darker</td>
+      <td>0</td>
+      <td>284.0</td>
+      <td>1.391283</td>
+      <td>424.341339</td>
+      <td>0.060690</td>
+      <td>8.347698</td>
+    </tr>
+    <tr>
+      <th>85951</th>
+      <td>strongest</td>
+      <td>305</td>
+      <td>0.000062</td>
+      <td>strongest</td>
+      <td>0</td>
+      <td>281.0</td>
+      <td>1.395895</td>
+      <td>425.748005</td>
+      <td>0.060891</td>
+      <td>6.979475</td>
+    </tr>
+    <tr>
+      <th>25210</th>
+      <td>draws</td>
+      <td>305</td>
+      <td>0.000062</td>
+      <td>draw</td>
+      <td>0</td>
+      <td>292.0</td>
+      <td>1.379219</td>
+      <td>420.661663</td>
+      <td>0.060163</td>
+      <td>4.137656</td>
+    </tr>
+    <tr>
+      <th>10882</th>
+      <td>breath</td>
+      <td>305</td>
+      <td>0.000062</td>
+      <td>breath</td>
+      <td>0</td>
+      <td>277.0</td>
+      <td>1.402122</td>
+      <td>427.647103</td>
+      <td>0.061162</td>
+      <td>11.216973</td>
+    </tr>
+    <tr>
+      <th>92396</th>
+      <td>trick</td>
+      <td>304</td>
+      <td>0.000062</td>
+      <td>trick</td>
+      <td>0</td>
+      <td>281.0</td>
+      <td>1.395895</td>
+      <td>424.352110</td>
+      <td>0.060691</td>
+      <td>8.375371</td>
+    </tr>
+    <tr>
+      <th>31878</th>
+      <td>fits</td>
+      <td>304</td>
+      <td>0.000062</td>
+      <td>fit</td>
+      <td>0</td>
+      <td>286.0</td>
+      <td>1.388235</td>
+      <td>422.023557</td>
+      <td>0.060358</td>
+      <td>6.941177</td>
+    </tr>
+    <tr>
+      <th>55591</th>
+      <td>merely</td>
+      <td>304</td>
+      <td>0.000062</td>
+      <td>mere</td>
+      <td>0</td>
+      <td>295.0</td>
+      <td>1.374779</td>
+      <td>417.932939</td>
+      <td>0.059773</td>
+      <td>4.124338</td>
+    </tr>
+    <tr>
+      <th>80532</th>
+      <td>sign</td>
+      <td>304</td>
+      <td>0.000062</td>
+      <td>sign</td>
+      <td>0</td>
+      <td>285.0</td>
+      <td>1.389757</td>
+      <td>421.096238</td>
+      <td>0.060225</td>
+      <td>4.169270</td>
     </tr>
   </tbody>
 </table>
+<p>1500 rows × 10 columns</p>
 </div>
 </div>
 
@@ -14049,14 +15685,8 @@ $( document ).ready(function(){
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Vocab-configuration">Vocab configuration<a class="anchor-link" href="#Vocab-configuration">&#182;</a></h2>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Tag-punctuation-and-numbers-and-extract-vocab-with-minimal-normalization">Tag punctuation and numbers and extract vocab with minimal normalization<a class="anchor-link" href="#Tag-punctuation-and-numbers-and-extract-vocab-with-minimal-normalization">&#182;</a></h3>
+<p>Looks bad!  I checked the adjectives to see if they were filtering properly.</p>
+
 </div>
 </div>
 </div>
@@ -14065,15 +15695,320 @@ $( document ).ready(function(){
 <div class="prompt input_prompt">In&nbsp;[21]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">WORDS</span> <span class="o">=</span> <span class="p">(</span><span class="n">tokens</span><span class="o">.</span><span class="n">punc</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">tokens</span><span class="o">.</span><span class="n">num</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
-<span class="n">tokens</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">WORDS</span><span class="p">,</span> <span class="s1">&#39;term_str&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tokens</span><span class="o">.</span><span class="n">token_str</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>\
-    <span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">token_pat</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
-<span class="c1">#     .str.replace(r&#39;[&quot;_*.\&#39;]&#39;, &#39;&#39;)</span>
-<span class="n">vocab</span> <span class="o">=</span> <span class="n">tokens</span><span class="p">[</span><span class="n">tokens</span><span class="o">.</span><span class="n">punc</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">term_str</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">to_frame</span><span class="p">()</span>\
-    <span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>\
-    <span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;index&#39;</span><span class="p">:</span><span class="s1">&#39;term_str&#39;</span><span class="p">,</span> <span class="s1">&#39;term_str&#39;</span><span class="p">:</span><span class="s1">&#39;n&#39;</span><span class="p">})</span>
-<span class="n">vocab</span> <span class="o">=</span> <span class="n">vocab</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s1">&#39;term_str&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">vocab</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;term_id&#39;</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">adjectives</span> <span class="o">=</span> <span class="n">tokens</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">tokens</span><span class="o">.</span><span class="n">pos</span> <span class="o">==</span> <span class="s1">&#39;JJ&#39;</span><span class="p">,</span> <span class="s1">&#39;term_str&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+<span class="n">adjectives_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">adjectives</span><span class="p">)</span>
+<span class="n">adjectives_df</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[21]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>0</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>enviable</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>able</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>familiar</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>other</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>little</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>adrift</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>contemporary</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>stylistic</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>number</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>scrappy</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>low</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>likeable</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>awkward</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>formed</td>
+    </tr>
+    <tr>
+      <th>14</th>
+      <td>full</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>former</td>
+    </tr>
+    <tr>
+      <th>16</th>
+      <td>old</td>
+    </tr>
+    <tr>
+      <th>17</th>
+      <td>nascent</td>
+    </tr>
+    <tr>
+      <th>18</th>
+      <td>jagged</td>
+    </tr>
+    <tr>
+      <th>19</th>
+      <td>complex</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>different</td>
+    </tr>
+    <tr>
+      <th>21</th>
+      <td>obvious</td>
+    </tr>
+    <tr>
+      <th>22</th>
+      <td>knotty</td>
+    </tr>
+    <tr>
+      <th>23</th>
+      <td>synth</td>
+    </tr>
+    <tr>
+      <th>24</th>
+      <td>right</td>
+    </tr>
+    <tr>
+      <th>25</th>
+      <td>same</td>
+    </tr>
+    <tr>
+      <th>26</th>
+      <td>live</td>
+    </tr>
+    <tr>
+      <th>27</th>
+      <td>nihilistic</td>
+    </tr>
+    <tr>
+      <th>28</th>
+      <td>forthright</td>
+    </tr>
+    <tr>
+      <th>29</th>
+      <td>straight</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>23610</th>
+      <td>textiles</td>
+    </tr>
+    <tr>
+      <th>23611</th>
+      <td>serpentwithfeets</td>
+    </tr>
+    <tr>
+      <th>23612</th>
+      <td>yousomeday</td>
+    </tr>
+    <tr>
+      <th>23613</th>
+      <td>lightlyhe</td>
+    </tr>
+    <tr>
+      <th>23614</th>
+      <td>job</td>
+    </tr>
+    <tr>
+      <th>23615</th>
+      <td>soil</td>
+    </tr>
+    <tr>
+      <th>23616</th>
+      <td>thecontrollersphere</td>
+    </tr>
+    <tr>
+      <th>23617</th>
+      <td>flunkt</td>
+    </tr>
+    <tr>
+      <th>23618</th>
+      <td>mouthful</td>
+    </tr>
+    <tr>
+      <th>23619</th>
+      <td>ununiform</td>
+    </tr>
+    <tr>
+      <th>23620</th>
+      <td>misjudged</td>
+    </tr>
+    <tr>
+      <th>23621</th>
+      <td>google</td>
+    </tr>
+    <tr>
+      <th>23622</th>
+      <td>individualist</td>
+    </tr>
+    <tr>
+      <th>23623</th>
+      <td>perfectionistannoying</td>
+    </tr>
+    <tr>
+      <th>23624</th>
+      <td>natureantagonistic</td>
+    </tr>
+    <tr>
+      <th>23625</th>
+      <td>yeezy</td>
+    </tr>
+    <tr>
+      <th>23626</th>
+      <td>lodge</td>
+    </tr>
+    <tr>
+      <th>23627</th>
+      <td>caps</td>
+    </tr>
+    <tr>
+      <th>23628</th>
+      <td>shackled</td>
+    </tr>
+    <tr>
+      <th>23629</th>
+      <td>denote</td>
+    </tr>
+    <tr>
+      <th>23630</th>
+      <td>swaggered</td>
+    </tr>
+    <tr>
+      <th>23631</th>
+      <td>wino</td>
+    </tr>
+    <tr>
+      <th>23632</th>
+      <td>southwind</td>
+    </tr>
+    <tr>
+      <th>23633</th>
+      <td>sarod</td>
+    </tr>
+    <tr>
+      <th>23634</th>
+      <td>adolesecent</td>
+    </tr>
+    <tr>
+      <th>23635</th>
+      <td>grrrrrrrrrrrrrrrr</td>
+    </tr>
+    <tr>
+      <th>23636</th>
+      <td>álbum</td>
+    </tr>
+    <tr>
+      <th>23637</th>
+      <td>othersand</td>
+    </tr>
+    <tr>
+      <th>23638</th>
+      <td>viva</td>
+    </tr>
+    <tr>
+      <th>23639</th>
+      <td>warrant</td>
+    </tr>
+  </tbody>
+</table>
+<p>23640 rows × 1 columns</p>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Looks like adjectives, so I compared a few of the top values that didn't seem like adjectives to see if they were actually coded as adjectives.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[22]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">w</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;like&quot;</span><span class="p">,</span> <span class="s2">&quot;album&quot;</span><span class="p">,</span> <span class="s2">&quot;music&quot;</span><span class="p">,</span> <span class="s2">&quot;one&quot;</span><span class="p">,</span> <span class="s2">&quot;songs&quot;</span><span class="p">]</span>
+<span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">w</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">adjectives_df</span><span class="p">[</span><span class="n">adjectives_df</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">word</span><span class="p">])</span>
 </pre></div>
 
     </div>
@@ -14089,9 +16024,17 @@ $( document ).ready(function(){
     <div class="prompt"></div>
 
 
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>C:\Users\Simran\Anaconda3\lib\site-packages\IPython\core\interactiveshell.py:2848: PerformanceWarning: indexing past lexsort depth may impact performance.
-  raw_cell, store_history, silent, shell_futures)
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>         0
+1114  like
+          0
+1122  album
+         0
+286  music
+       0
+160  one
+         0
+499  songs
 </pre>
 </div>
 </div>
@@ -14103,27 +16046,15 @@ $( document ).ready(function(){
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Get-priors-for-Vocab">Get priors for Vocab<a class="anchor-link" href="#Get-priors-for-Vocab">&#182;</a></h3>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[22]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">vocab</span><span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">vocab</span><span class="o">.</span><span class="n">n</span> <span class="o">/</span> <span class="n">vocab</span><span class="o">.</span><span class="n">n</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-</pre></div>
+<p>The words are actually coded as adjectives at least once.  Looks like this is just a case of bad pos tagging.</p>
 
-    </div>
 </div>
 </div>
-
 </div>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Add-stems">Add stems<a class="anchor-link" href="#Add-stems">&#182;</a></h3>
+<h2 id="Save-adjectives-to-db">Save adjectives to db<a class="anchor-link" href="#Save-adjectives-to-db">&#182;</a></h2>
 </div>
 </div>
 </div>
@@ -14132,87 +16063,12 @@ $( document ).ready(function(){
 <div class="prompt input_prompt">In&nbsp;[23]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">stemmer</span> <span class="o">=</span> <span class="n">nltk</span><span class="o">.</span><span class="n">stem</span><span class="o">.</span><span class="n">porter</span><span class="o">.</span><span class="n">PorterStemmer</span><span class="p">()</span>
-<span class="n">vocab</span><span class="p">[</span><span class="s1">&#39;port_stem&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">vocab</span><span class="o">.</span><span class="n">term_str</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">stemmer</span><span class="o">.</span><span class="n">stem</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Define-stopwords">Define stopwords<a class="anchor-link" href="#Define-stopwords">&#182;</a></h3>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[24]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">stopwords</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">nltk</span><span class="o">.</span><span class="n">corpus</span><span class="o">.</span><span class="n">stopwords</span><span class="o">.</span><span class="n">words</span><span class="p">(</span><span class="s1">&#39;english&#39;</span><span class="p">))</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[25]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">sw</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;x&#39;</span><span class="p">:</span><span class="mi">1</span><span class="p">},</span> <span class="n">index</span><span class="o">=</span><span class="n">stopwords</span><span class="p">)</span>
-<span class="n">vocab</span><span class="p">[</span><span class="s1">&#39;stop&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">vocab</span><span class="o">.</span><span class="n">term_str</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">sw</span><span class="o">.</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;int&#39;</span><span class="p">)</span>
-<span class="k">del</span><span class="p">(</span><span class="n">sw</span><span class="p">)</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Add-term_ids-to-Tokens">Add term_ids to Tokens<a class="anchor-link" href="#Add-term_ids-to-Tokens">&#182;</a></h3>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[26]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">tokens</span><span class="p">[</span><span class="s1">&#39;term_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tokens</span><span class="p">[</span><span class="s1">&#39;term_str&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">vocab</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>\
-    <span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;term_str&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">term_id</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;int&#39;</span><span class="p">)</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="Save-as-SQL-file">Save as SQL file<a class="anchor-link" href="#Save-as-SQL-file">&#182;</a></h1>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[27]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="k">with</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">db_file</span><span class="p">)</span> <span class="k">as</span> <span class="n">db</span><span class="p">:</span>
-    <span class="n">pitchfork</span><span class="o">.</span><span class="n">to_sql</span><span class="p">(</span><span class="s1">&#39;doc&#39;</span><span class="p">,</span> <span class="n">db</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="s1">&#39;replace&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">tokens</span><span class="o">.</span><span class="n">to_sql</span><span class="p">(</span><span class="s1">&#39;token&#39;</span><span class="p">,</span> <span class="n">db</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="s1">&#39;replace&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">with</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">db_name2</span><span class="p">)</span> <span class="k">as</span> <span class="n">db</span><span class="p">:</span>
     <span class="n">vocab</span><span class="o">.</span><span class="n">to_sql</span><span class="p">(</span><span class="s1">&#39;vocab&#39;</span><span class="p">,</span> <span class="n">db</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="s1">&#39;replace&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">tokens</span><span class="o">.</span><span class="n">to_sql</span><span class="p">(</span><span class="s1">&#39;token&#39;</span><span class="p">,</span> <span class="n">db</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="s1">&#39;replace&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">docs</span><span class="o">.</span><span class="n">to_sql</span><span class="p">(</span><span class="s1">&#39;doc&#39;</span><span class="p">,</span> <span class="n">db</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="s1">&#39;replace&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">tfidf_small</span><span class="o">.</span><span class="n">to_sql</span><span class="p">(</span><span class="s1">&#39;tfidf_small&#39;</span><span class="p">,</span> <span class="n">db</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="s1">&#39;replace&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">bags</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span><span class="o">.</span><span class="n">to_sql</span><span class="p">(</span><span class="s1">&#39;bag&#39;</span><span class="p">,</span> <span class="n">db</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="s1">&#39;replace&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">index_label</span><span class="o">=</span><span class="s1">&#39;bag_id&#39;</span><span class="p">)</span>
 </pre></div>
 
     </div>
