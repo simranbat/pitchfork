@@ -25,6 +25,10 @@ PCA of reviews to determine whether genres can be identified; HTML contains inte
 
 Attempts to classify Pitchfork reviews as positive or negative
 
+- textman.py
+
+Dependency .py file 
+
 
 
 DB files in dropbox
